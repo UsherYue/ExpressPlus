@@ -1,0 +1,84 @@
+#!/usr/bin/env node
+
+/**
+ * PHPProject
+ * Helper.php Created by usher.yue.
+ * User: usher.yue
+ * Date: 17/1/8
+ * Time: 下午5:27
+ * 心怀教育梦－烟台网格软件技术有限公司
+ */
+'use strict';
+
+//global config
+global.config = require('../conf/config');
+//router config
+global.config.nsConfig=require('../conf/ns');
+
+var app = require('../app');
+var debug = require('debug')('express:server');
+var http = require('http');
+
+
+//server port
+var port = normalizePort(process.env.PORT || global.config.httpConfig.port);
+app.set('port', port);
+
+var server = http.createServer(app);
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * port convert
+ * @param val
+ * @returns {*}
+ */
+function normalizePort(val) {
+    var port = parseInt(val, 10);
+    if (isNaN(port)) {
+        return val;
+    }
+    if (port >= 0) {
+        return port;
+    }
+    return false;
+}
+
+/**
+ *
+ * Normalize a port into a number, string, or false.
+ * @param error
+ */
+function onError(error) {
+    if (error.syscall !== 'listen') {
+        throw error;
+    }
+    var bind = typeof port === 'string'
+        ? 'Pipe ' + port
+        : 'Port ' + port;
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+        case 'EACCES':
+            console.error(bind + ' requires elevated privileges');
+            process.exit(1);
+            break;
+        case 'EADDRINUSE':
+            console.error(bind + ' is already in use');
+            process.exit(1);
+            break;
+        default:
+            throw error;
+    }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+function onListening() {
+    var addr = server.address();
+    var bind = typeof addr === 'string'
+        ? 'pipe ' + addr
+        : 'port ' + addr.port;
+    debug('Express Listening on ' + bind);
+}
