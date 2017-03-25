@@ -36,5 +36,13 @@ module.exports = {
         port:6380,
         db:0,
         password:''
-    }
+    },
+    //静态目录配置
+    staticConfig:[
+        {
+            router:'/',
+            path:'static',
+            index:'index.html'
+        }
+    ]
 };

@@ -4,6 +4,7 @@
  * User: usher.yue
  * Date: 17/1/8
  * Time: 下午5:27
+ * 心怀教育梦－烟台网格软件技术有限公司
  */
 
 'use strict';
@@ -36,6 +37,7 @@ app.use(bodyParser.urlencoded({extended: false}));
         this._initNs();
         this._initDb();
         this._initRedis();
+        this._initStatic();
         this._initApp(__dirname + "/common/");
         this._initRouter(__dirname + '/routes/');
         this._initModules(__dirname + '/models/');
@@ -107,6 +109,15 @@ app.use(bodyParser.urlencoded({extended: false}));
                 $this._initModules(path + moduleFileName + "/");
             }
         });
+    },
+    _initStatic: function () {
+        if (!global.config.staticConfig || !global.config.staticConfig.length) {
+            app.use('/static', express.static('static'));
+        } else {
+            global.config.staticConfig.forEach(function (item, index, array) {
+                app.use(item.router, express.static(item.path,{index:item.index?item.index:'index.html'}));
+            });
+        }
     },
     _initRedis: function () {
         if (!global.config.redisConfig || !global.config.redisConfig.host) {
@@ -311,9 +322,9 @@ app.use(bodyParser.urlencoded({extended: false}));
                 return new Date().getTime();
             };
         }
-        global.return = (ret, data,msg) => ({ret: ret, data: data,msg:msg})
-        global.error = (data,msg) => ({ret: 0, data: data,msg:msg});
-        global.success =(data,msg) => ({ret: 1, data: data,msg:msg});
+        global.return = (ret, data, msg) => ({ret: ret, data: data, msg: msg})
+        global.error = (data, msg) => ({ret: 0, data: data, msg: msg});
+        global.success = (data, msg) => ({ret: 1, data: data, msg: msg});
     },
     _initProcess: function () {
         //防止进程退出
