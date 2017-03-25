@@ -4,7 +4,6 @@
  * User: usher.yue
  * Date: 17/2/21
  * Time: 10:51
- * 心怀教育梦－烟台网格软件技术有限公司
  */
 let assert = require('chai').assert;
 //  expect('2').to.be.a('string');

@@ -4,7 +4,6 @@
  * User: usher.yue
  * Date: 17/1/8
  * Time: 下午5:27
- * 心怀教育梦－烟台网格软件技术有限公司
  */
 
 module.exports = {

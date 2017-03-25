@@ -4,7 +4,6 @@
  * User: usher.yue
  * Date: 17/1/24
  * Time: 18:25
- * 心怀教育梦－烟台网格软件技术有限公司
  */
 
 "use strict";
