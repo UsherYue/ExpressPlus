@@ -9,10 +9,11 @@ let router=global.newRouter();
 router.get('/test',function (req,res,next) {
     if(!req.session.uid){
         req.session.uid=11111111;
-        console.log('lalalallalalal');
-    }else{
-        console.log('1111');
     }
+    if(!req.cookies.x){
+        res.cookie('x',1111111111111);
+    }
+    console.log(req.cookies);
     res.json(req.session);
 });
 
