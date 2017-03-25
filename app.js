@@ -14,8 +14,12 @@ var fs = require('fs');
 //加载系统模块 用户模块
 var express = require('express');
 var bodyParser = require('body-parser');
+var session = require('express-session');
+var cookieParser = require('cookie-parser')
+
 var multer = require('multer');
 var logger = require('morgan');
+
 
 
 var app = express();
@@ -28,6 +32,22 @@ app.use(bodyParser.json({limit: '10mb'}));
 
 //body content urlencode
 app.use(bodyParser.urlencoded({extended: false}));
+
+//support cookie
+app.use(cookieParser());
+
+//express-seesion
+app.use(session({
+    name:'sessionid',
+    secret:'f-u-c-k-!',
+    resave:false,
+    proxy:true,
+    saveUninitialized:true,
+    maxAge:60*60*1000*24  ,//24h
+    cookie:{
+        maxAge:60*1000*60*24
+    }
+}));
 
 //config加载
 ({
