@@ -44,5 +44,9 @@ module.exports = {
             path:'static',
             index:'index.html'
         }
-    ]
+    ],
+    //session配置
+    sessionConfig:{
+
+    }
 };

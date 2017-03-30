@@ -21,7 +21,6 @@ var multer = require('multer');
 var logger = require('morgan');
 
 
-
 var app = express();
 
 //body content json解析
@@ -38,14 +37,38 @@ app.use(cookieParser());
 
 //express-seesion
 app.use(session({
-    name:'sessionid',
-    secret:'f-u-c-k-!',
-    resave:false,
-    proxy:true,
-    saveUninitialized:true,
-    maxAge:60*60*1000*24  ,//24h
-    cookie:{
-        maxAge:60*1000*60*24
+    name: 'sessionid',
+    secret: 'f-u-c-k-!',
+    store: (() => {
+        if (!global.config.sessionConfig || !global.config.sessionConfig.driver || global.config.sessionConfig.driver.toLowerCase() == 'memory')
+            return null;
+        switch (global.config.sessionConfig.driver) {
+            case 'sequelize': {
+                var SequelizeStore = require('connect-session-sequelize')(session.Store);
+                return new SequelizeStore({
+                    db: global.db
+                })
+            }
+            case 'mysql': {
+                var MySQLStore = require('express-mysql-session')(session);
+                return new MySQLStore(global.config.sessionConfig.options);
+            }
+            case 'redis': {
+                var RedisStore = require('connect-redis')(session);
+                return new RedisStore(global.config.sessionConfig.options);
+            }
+            case 'file': {
+                var FileStore = require('session-file-store')(session);
+                return new FileStore(global.config.sessionConfig.options);
+            }
+        }
+    })(),
+    resave: false,
+    proxy: true,
+    saveUninitialized: true,
+    maxAge: 60 * 60 * 1000 * 24,//24h
+    cookie: {
+        maxAge: 60 * 1000 * 60 * 24
     }
 }));
 
@@ -135,7 +158,7 @@ app.use(session({
             app.use('/static', express.static('static'));
         } else {
             global.config.staticConfig.forEach(function (item, index, array) {
-                app.use(item.router, express.static(item.path,{index:item.index?item.index:'index.html'}));
+                app.use(item.router, express.static(item.path, {index: item.index ? item.index : 'index.html'}));
             });
         }
     },
@@ -353,7 +376,6 @@ app.use(session({
         });
     }
 }).init();
-
 
 //debug 生产环境直接注释
 app.use(logger('dev'));
