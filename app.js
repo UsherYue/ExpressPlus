@@ -10,6 +10,7 @@
 'use strict';
 
 var fs = require('fs');
+var path = require('path')
 
 //加载系统模块 用户模块
 var express = require('express');
@@ -61,6 +62,10 @@ app.use(session({
                 var FileStore = require('session-file-store')(session);
                 return new FileStore(global.config.sessionConfig.options);
             }
+            case 'memcached':{
+                var FileStore = require('connect-memcached')(session);
+                return new MemcachedStore(global.config.sessionConfig.options);
+            }
         }
     })(),
     resave: false,
@@ -81,6 +86,7 @@ app.use(session({
         this._initDb();
         this._initRedis();
         this._initStatic();
+        this._initTemplate();
         this._initApp(__dirname + "/common/");
         this._initRouter(__dirname + '/routes/');
         this._initModules(__dirname + '/models/');
@@ -328,6 +334,25 @@ app.use(session({
         } catch (e) {
             console.error('db init error!....');
         }
+    },
+    _initTemplate: function () {
+        let tplPath = path.join(__dirname, (config.templateConfig && config.templateConfig.viewsPath) ? (config.templateConfig.viewsPath) : 'views');
+        let useCache = (config.templateConfig && config.templateConfig.useCache) ? config.templateConfig.userCache : false;
+        let viewEngine = (config.templateConfig && config.templateConfig.viewEngine) ? config.templateConfig.viewEngine : 'artTemplate';
+        let defaultTplExt = (config.templateConfig && config.templateConfig.extName) ? config.templateConfig.extName : '.html';
+        let encoding = (config.templateConfig && config.templateConfig.encoding) ? config.templateConfig.encoding : 'utf-8';
+        switch (viewEngine) {
+            case 'artTemplate': {
+                let template = require('art-template');
+                template.config('base', '');
+                template.config('extname', defaultTplExt);
+                template.config('encoding', encoding);
+                app.engine(defaultTplExt, template.__express);
+            }
+        }
+        app.set('views', tplPath);
+        app.set('view engine',defaultTplExt);
+        app.set('view cache', useCache);
     },
     _initApp: function (commonPath) {
         global.express = express;

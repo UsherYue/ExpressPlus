@@ -41,12 +41,23 @@ module.exports = {
     staticConfig:[
         {
             router:'/',
-            path:'static',
+            path:'public',
             index:'index.html'
         }
     ],
-    //session配置
+    //session配置 session共享需要 redis mysql 集群支持
     sessionConfig:{
+        driver:'memory',
+        options:{
 
+        }
+    },
+    //模板引擎配置
+    templateConfig:{
+        viewsPath:'views',
+        useCache:false,
+        viewEngine:'artTemplate',
+        extName:'.tplx',
+        encoding:'utf8'
     }
 };

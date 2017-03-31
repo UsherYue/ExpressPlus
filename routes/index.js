@@ -13,4 +13,12 @@ router.get('/abc', function (req, res, next) {
     res.json('hello,aaa!');
 });
 
+//http://127.0.0.1:3001/index/v1/index访问 模板引擎
+router.get('/index',function (req,res,next) {
+    res.render('index',{
+        list:[1,2,3,4,5]
+    });
+});
+
+
 module.exports = router;
