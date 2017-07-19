@@ -62,7 +62,7 @@ app.use(session({
                 var FileStore = require('session-file-store')(session);
                 return new FileStore(global.config.sessionConfig.options);
             }
-            case 'memcached':{
+            case 'memcached': {
                 var FileStore = require('connect-memcached')(session);
                 return new MemcachedStore(global.config.sessionConfig.options);
             }
@@ -318,6 +318,7 @@ app.use(session({
             var sequelize = new Sequelize(global.config.dbConfig.dbname, null, null, {
                 //支持bigint issues
                 //https://github.com/sequelize/sequelize/issues/1222
+                //logging:true,
                 dialectOptions: (!global.config.dbConfig.dialectOptions) ? {} : global.config.dbConfig.dialectOptions,
                 dialect: global.config.dbConfig.dbtype,
                 replication: {
@@ -351,7 +352,7 @@ app.use(session({
             }
         }
         app.set('views', tplPath);
-        app.set('view engine',defaultTplExt);
+        app.set('view engine', defaultTplExt);
         app.set('view cache', useCache);
     },
     _initApp: function (commonPath) {
@@ -390,6 +391,28 @@ app.use(session({
                 return new Date().getTime();
             };
         }
+        String.prototype.format = function (args) {
+            var result = this;
+            if (arguments.length > 0) {
+                if (arguments.length == 1 && typeof (args) == "object") {
+                    for (var key in args) {
+                        if (args[key] != undefined) {
+                            var reg = new RegExp("({" + key + "})", "g");
+                            result = result.replace(reg, args[key]);
+                        }
+                    }
+                }
+                else {
+                    for (var i = 0; i < arguments.length; i++) {
+                        if (arguments[i] != undefined) {
+                            var reg = new RegExp("({)" + i + "(})", "g");
+                            result = result.replace(reg, arguments[i]);
+                        }
+                    }
+                }
+            }
+            return result;
+        }
         global.return = (ret, data, msg) => ({ret: ret, data: data, msg: msg})
         global.error = (data, msg) => ({ret: 0, data: data, msg: msg});
         global.success = (data, msg) => ({ret: 1, data: data, msg: msg});
@@ -404,7 +427,6 @@ app.use(session({
 
 //debug 生产环境直接注释
 app.use(logger('dev'));
-
 
 //捕获404状态码
 app.use(function (req, res, next) {
@@ -421,6 +443,5 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.send('server error:' + err.message);
 });
-
 
 module.exports = app;
