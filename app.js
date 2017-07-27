@@ -71,9 +71,9 @@ app.use(session({
     resave: false,
     proxy: true,
     saveUninitialized: true,
-    maxAge: 60 * 60 * 1000 * 24,//24h
+    maxAge: 60 * 60 * 1000 * 24 * 365,//24h
     cookie: {
-        maxAge: 60 * 1000 * 60 * 24
+        //set sessionid expires
     }
 }));
 
@@ -87,6 +87,7 @@ app.use(session({
         this._initRedis();
         this._initStatic();
         this._initTemplate();
+        this._initMiddleWare();
         this._initApp(__dirname + "/common/");
         this._initRouter(__dirname + '/routes/');
         this._initModules(__dirname + '/models/');
@@ -250,33 +251,46 @@ app.use(session({
             console.error('miss dbname  conf.....');
         }
         Sequelize.prototype.select = function (sql) {
-            return this.query(sql, {type: this.QueryTypes.SELECT}).catch(function (ex) {
-                console.log(ex.errors);
-                return false;
-            });
-        }
-        Sequelize.prototype.insert = function (sql) {
-            return this.query(sql, {type: this.QueryTypes.INSERT}).catch(function (ex) {
-                console.log(ex);
-                return false;
-            }).then(function (result) {
+            return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
+                result.firstRow = function () {
+                    return this.length == 0 ? null : this[0];
+                };
                 return result;
+            }, function (ex) {
+                return false;
             });
-        }
+        };
+        Sequelize.prototype.selectOne = function (sql) {
+            let $this = this;
+            return new Promise(function (resolve, reject) {
+                $this.query(sql, {type: $this.QueryTypes.SELECT}).then(function (result) {
+                    resolve(result.length == 0 ? null : result[0])
+                }, function (ex) {
+                    reject(false);
+                });
+            });
+        };
+        Sequelize.prototype.insert = function (sql) {
+            return this.query(sql, {type: this.QueryTypes.INSERT}).then(function (result) {
+                return result;
+            }, function (ex) {
+                return false;
+            });
+        };
         Sequelize.prototype.delete = function (sql) {
-            return this.query(sql, {type: this.QueryTypes.DELETE}).catch(function (ex) {
-                console.log(ex);
-                return false;
-            });
-        }
-        Sequelize.prototype.update = function (sql) {
-            return this.query(sql, {type: this.QueryTypes.UPDATE}).catch(function (ex) {
-                console.log(ex);
-                return false;
-            }).then(function (result) {
+            return this.query(sql, {type: this.QueryTypes.DELETE}).then(function (result) {
                 return true;
+            }, function (ex) {
+                return false;
             });
-        }
+        };
+        Sequelize.prototype.update = function (sql) {
+            return this.query(sql, {type: this.QueryTypes.UPDATE}).then(function (result) {
+                return true;
+            }, function (ex) {
+                return false;
+            });
+        };
         try {
             Sequelize.prototype.getPages = function (sql, currentPage, pageCount, retTotal) {
                 currentPage = (currentPage <= 0) ? 1 : currentPage;
@@ -326,9 +340,9 @@ app.use(session({
                     write: (!global.config.dbConfig.write) ? {} : global.config.dbConfig.write
                 },
                 pool: (!global.config.dbConfig.pool) ? {
-                        maxConnections: 20,
-                        maxIdleTime: 30000
-                    } : global.config.dbConfig.pool,
+                    maxConnections: 20,
+                    maxIdleTime: 30000
+                } : global.config.dbConfig.pool,
             });
             //golbal database
             global.db = sequelize;
@@ -344,16 +358,19 @@ app.use(session({
         let encoding = (config.templateConfig && config.templateConfig.encoding) ? config.templateConfig.encoding : 'utf-8';
         switch (viewEngine) {
             case 'artTemplate': {
-                let template = require('art-template');
-                template.config('base', '');
-                template.config('extname', defaultTplExt);
-                template.config('encoding', encoding);
-                app.engine(defaultTplExt, template.__express);
+                app.engine('html', require('express-art-template'));
+                app.set('view options', {
+                    base: '',
+                    debug: true,
+                    extname: defaultTplExt,
+                    engine: defaultTplExt,
+                    cache: useCache,
+                    views: tplPath,
+                    'encoding': encoding,
+                });
+                app.set('view engine', defaultTplExt);
             }
         }
-        app.set('views', tplPath);
-        app.set('view engine', defaultTplExt);
-        app.set('view cache', useCache);
     },
     _initApp: function (commonPath) {
         global.express = express;
@@ -413,9 +430,34 @@ app.use(session({
             }
             return result;
         }
+        global.nowTs = () => Math.round(Date.now() / 1000);
+        global.isArray = (o) => {
+            return Object.prototype.toString.call(o) === `[object Array]`;
+        }
+        global.deepClone = (o) => {
+            var t = o instanceof Array ? [] : {};
+            for (var f in o) {
+                t[f] = typeof o[f] === 'object' ? deepClone(o[f]) : o[f];
+            }
+            return t;
+        };
+        global.filterValue = (val, defaultvalue) => (typeof(val) == 'undefined' || !val) ? defaultvalue : val;
         global.return = (ret, data, msg) => ({ret: ret, data: data, msg: msg})
         global.error = (data, msg) => ({ret: 0, data: data, msg: msg});
         global.success = (data, msg) => ({ret: 1, data: data, msg: msg});
+    },
+    _initMiddleWare: function () {
+        global.mw = {};
+        global.mw.crosser = (allowOrigin, allowHeader, allowMethod, allowCredential) => {
+            return (req, res, next) => {
+                res.header("Access-Control-Allow-Credentials", allowCredential || "true");
+                res.header("Access-Control-Allow-Headers", allowHeader || "*");
+                res.header("Access-Control-Allow-Origin", allowOrigin || req.headers.origin || "*");
+                res.header("Access-Control-Allow-Methods", allowMethod || "POST, GET");
+                res.header("X-Powered-By", 'CrossDomainAllower');
+                next();
+            };
+        }
     },
     _initProcess: function () {
         //防止进程退出
