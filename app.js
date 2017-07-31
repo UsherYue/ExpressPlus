@@ -369,6 +369,12 @@ app.use(session({
                     'encoding': encoding,
                 });
                 app.set('view engine', defaultTplExt);
+                global.renderToHtml = (view, data) => {
+                    let template = require('art-template');
+                    let parseFile = path.join(process.cwd(), 'views', view + defaultTplExt)
+                    let html = template(parseFile, data);
+                    return html;
+                };
             }
         }
     },
