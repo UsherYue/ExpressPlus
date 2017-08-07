@@ -88,7 +88,7 @@ app.use(session({
         this._initStatic();
         this._initTemplate();
         this._initMiddleWare();
-        this._initI18N(__dirname + "/lang1", '.json');
+        this._initI18N(__dirname + "/lang", '.json');
         this._initApp(__dirname + "/common/");
         this._initRouter(__dirname + '/routes/');
         this._initModules(__dirname + '/models/');
