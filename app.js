@@ -9,20 +9,20 @@
 
 'use strict';
 
+//加载系统模块
 var fs = require('fs');
-var path = require('path')
+var path = require('path');
 
-//加载系统模块 用户模块
 var express = require('express');
 var bodyParser = require('body-parser');
 var session = require('express-session');
-var cookieParser = require('cookie-parser')
+var cookieParser = require('cookie-parser');
+
+//用户模块
+var app = express();
 
 var multer = require('multer');
 var logger = require('morgan');
-
-
-var app = express();
 
 //body content json解析
 app.use(bodyParser.json());
@@ -88,6 +88,7 @@ app.use(session({
         this._initStatic();
         this._initTemplate();
         this._initMiddleWare();
+        this._initI18N(__dirname + "/lang1", '.json');
         this._initApp(__dirname + "/common/");
         this._initRouter(__dirname + '/routes/');
         this._initModules(__dirname + '/models/');
@@ -116,6 +117,36 @@ app.use(session({
                 $this._initRouter(path + routeFileName + "/")
             }
         });
+    },
+    _initI18N: function (i18nPath, ext) {
+        try {
+            const locales = [];
+            let files = fs.readdirSync(i18nPath);
+            files.forEach(function (fileName, index) {
+                if (fileName.lastIndexOf('.json') !== -1) {
+                    let i18nName = (fileName.indexOf('.') == -1) ? fileName : fileName.split('.')[0];
+                    locales.push(i18nName);
+                }
+            });
+            if (locales) {
+                var i18n = require('i18n');
+                //config i18n support
+                i18n.configure({
+                    locales: locales,
+                    defaultLocale: 'zh-CN',
+                    directory: i18nPath,
+                    updateFiles: false,
+                    indent: "\t",
+                    extension: ext
+                });
+                //var greeting = i18n.__('Hello');
+                //console.log(greeting)
+                //use i18n middleware
+                app.use(i18n.init);
+            }
+        } catch (ex) {
+            console.error(ex.toString());
+        }
     },
     _initModules: function (path) {
         if (!global.models) {
@@ -453,17 +484,35 @@ app.use(session({
         global.success = (data, msg) => ({ret: 1, data: data, msg: msg});
     },
     _initMiddleWare: function () {
-        global.mw = {};
-        global.mw.crosser = (allowOrigin, allowHeader, allowMethod, allowCredential) => {
-            return (req, res, next) => {
-                res.header("Access-Control-Allow-Credentials", allowCredential || "true");
-                res.header("Access-Control-Allow-Headers", allowHeader || "*");
-                res.header("Access-Control-Allow-Origin", allowOrigin || req.headers.origin || "*");
-                res.header("Access-Control-Allow-Methods", allowMethod || "POST, GET");
-                res.header("X-Powered-By", 'CrossDomainAllower');
-                next();
-            };
-        }
+        global.mw = {
+            crosser: (allowOrigin, allowHeader, allowMethod, allowCredential) => {
+                return (req, res, next) => {
+                    res.header("Access-Control-Allow-Credentials", allowCredential || "true");
+                    res.header("Access-Control-Allow-Headers", allowHeader || "*");
+                    res.header("Access-Control-Allow-Origin", allowOrigin || req.headers.origin || "*");
+                    res.header("Access-Control-Allow-Methods", allowMethod || "POST, GET");
+                    res.header("X-Powered-By", 'CrossDomainAllower');
+                    next();
+                };
+            },
+            /*
+            *csrf protection middleware
+            *app.get('/form', csrfProtection, function (req, res) {
+            *  // pass the csrfToken to the view
+            *  res.render('send', { csrfToken: req.csrfToken() })
+            *})
+            *
+            *<form action="/process" method="POST">*
+            *   <input type="hidden" name="_csrf" value="{{csrfToken}}">
+            *   Favorite color: <input type="text" name="favoriteColor">
+            *   <button type="submit">Submit</button>
+            * </form>
+            */
+            csrfProtection: () => {
+                let csrf = require('csurf');
+                return csrf({cookie: true});
+            }
+        };
     },
     _initProcess: function () {
         //防止进程退出
