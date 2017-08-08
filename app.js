@@ -137,12 +137,29 @@ app.use(session({
                     directory: i18nPath,
                     updateFiles: false,
                     indent: "\t",
-                    extension: ext
+                    extension: ext,
+                    logDebugFn: function (msg) {
+                        console.log('debug', msg);
+                    },
+                    logWarnFn: function (msg) {
+                        // console.log('warn', msg);
+                    },
+                    logErrorFn: function (msg) {
+                        console.log('error', msg);
+                    }
                 });
-                //var greeting = i18n.__('Hello');
-                //console.log(greeting)
                 //use i18n middleware
                 app.use(i18n.init);
+                global.__ = (...args) => i18n.__(...args);
+                global.__n = (...args) => i18n.__n(...args);
+                global.__h = (...args) => i18n.__h(...args);
+                global.__mf = (...args) => i18n.__mf(...args);
+                global.L = (...args) => i18n.__(...args);
+                global.setLocale = (local) => {
+                    i18n.setLocale(local)
+                };
+                global.getLocale = () => i18n.getLocale(...arguments);
+                global.getLocales =()=>i18n.getCatalog();
             }
         } catch (ex) {
             console.error(ex.toString());
@@ -389,7 +406,7 @@ app.use(session({
         let encoding = (config.templateConfig && config.templateConfig.encoding) ? config.templateConfig.encoding : 'utf-8';
         switch (viewEngine) {
             case 'artTemplate': {
-                app.engine('html', require('express-art-template'));
+                app.engine(defaultTplExt.replace(".",""), require('express-art-template'));
                 app.set('view options', {
                     base: '',
                     debug: true,

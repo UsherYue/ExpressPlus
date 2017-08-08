@@ -72,7 +72,15 @@ router.get('/test1', function (req, res, next) {
 
 //
 router.get('/test2', function (req, res, next) {
-     res.send(200,global.http.post());
+    console.log(req.__('Hello'));
+    console.log(getLocale())
+    console.log(getLocales());
+     setLocale('zh-TW');
+     console.log(getLocale());
+     console.log(__('Hello'));
+     setLocale('zh-CN')
+     console.log(L('Hello'));
+     res.send('test');
 });
 
 module.exports = router;
