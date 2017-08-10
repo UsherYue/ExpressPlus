@@ -77,6 +77,9 @@ app.use(session({
     }
 }));
 
+//delete DEBUG_FD
+delete process.env["DEBUG_FD"];
+
 //config加载
 ({
     routers: [],
@@ -139,13 +142,13 @@ app.use(session({
                     indent: "\t",
                     extension: ext,
                     logDebugFn: function (msg) {
-                        console.log('debug', msg);
+                        //console.log('debug', msg);
                     },
                     logWarnFn: function (msg) {
                         // console.log('warn', msg);
                     },
                     logErrorFn: function (msg) {
-                        console.log('error', msg);
+                        //console.log('error', msg);
                     }
                 });
                 //use i18n middleware
@@ -159,7 +162,7 @@ app.use(session({
                     i18n.setLocale(local)
                 };
                 global.getLocale = () => i18n.getLocale(...arguments);
-                global.getLocales = () => i18n.getCatalog();
+                global.getLocales =()=>i18n.getCatalog();
             }
         } catch (ex) {
             console.error(ex.toString());
@@ -291,55 +294,55 @@ app.use(session({
         }
     },
     _initDb: function ($this) {
+        let Sequelize = require('sequelize');
+        if (!global.config.dbConfig.dbtype) {
+            console.error('miss dbtype conf.....');
+        }
+        if (!global.config.dbConfig.dbname) {
+            console.error('miss dbname  conf.....');
+        }
+        Sequelize.prototype.select = function (sql) {
+            return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
+                result.firstRow = function () {
+                    return this.length == 0 ? null : this[0];
+                };
+                return result;
+            }, function (ex) {
+                return false;
+            });
+        };
+        Sequelize.prototype.selectOne = function (sql) {
+            let $this = this;
+            return new Promise(function (resolve, reject) {
+                $this.query(sql, {type: $this.QueryTypes.SELECT}).then(function (result) {
+                    resolve(result.length == 0 ? null : result[0])
+                }, function (ex) {
+                    reject(false);
+                });
+            });
+        };
+        Sequelize.prototype.insert = function (sql) {
+            return this.query(sql, {type: this.QueryTypes.INSERT}).then(function (result) {
+                return result;
+            }, function (ex) {
+                return false;
+            });
+        };
+        Sequelize.prototype.delete = function (sql) {
+            return this.query(sql, {type: this.QueryTypes.DELETE}).then(function (result) {
+                return true;
+            }, function (ex) {
+                return false;
+            });
+        };
+        Sequelize.prototype.update = function (sql) {
+            return this.query(sql, {type: this.QueryTypes.UPDATE}).then(function (result) {
+                return true;
+            }, function (ex) {
+                return false;
+            });
+        };
         try {
-            let Sequelize = require('sequelize');
-            if (!global.config.dbConfig.dbtype) {
-                console.error('miss dbtype conf.....');
-            }
-            if (!global.config.dbConfig.dbname) {
-                console.error('miss dbname  conf.....');
-            }
-            Sequelize.prototype.select = function (sql) {
-                return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
-                    result.firstRow = function () {
-                        return this.length == 0 ? null : this[0];
-                    };
-                    return result;
-                }, function (ex) {
-                    return false;
-                });
-            };
-            Sequelize.prototype.selectOne = function (sql) {
-                let $this = this;
-                return new Promise(function (resolve, reject) {
-                    $this.query(sql, {type: $this.QueryTypes.SELECT}).then(function (result) {
-                        resolve(result.length == 0 ? null : result[0])
-                    }, function (ex) {
-                        reject(false);
-                    });
-                });
-            };
-            Sequelize.prototype.insert = function (sql) {
-                return this.query(sql, {type: this.QueryTypes.INSERT}).then(function (result) {
-                    return result;
-                }, function (ex) {
-                    return false;
-                });
-            };
-            Sequelize.prototype.delete = function (sql) {
-                return this.query(sql, {type: this.QueryTypes.DELETE}).then(function (result) {
-                    return true;
-                }, function (ex) {
-                    return false;
-                });
-            };
-            Sequelize.prototype.update = function (sql) {
-                return this.query(sql, {type: this.QueryTypes.UPDATE}).then(function (result) {
-                    return true;
-                }, function (ex) {
-                    return false;
-                });
-            };
             Sequelize.prototype.getPages = function (sql, currentPage, pageCount, retTotal) {
                 currentPage = (currentPage <= 0) ? 1 : currentPage;
                 pageCount = (pageCount <= 0) ? 10 : pageCount;
@@ -406,7 +409,7 @@ app.use(session({
         let encoding = (config.templateConfig && config.templateConfig.encoding) ? config.templateConfig.encoding : 'utf-8';
         switch (viewEngine) {
             case 'artTemplate': {
-                app.engine(defaultTplExt.replace(".", ""), require('express-art-template'));
+                app.engine(defaultTplExt.replace(".",""), require('express-art-template'));
                 app.set('view options', {
                     base: '',
                     debug: true,
