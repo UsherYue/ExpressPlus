@@ -50,20 +50,6 @@ module.exports = {
             }).join(',');
             valList = values.map(function (val) {
                 return '(' + Object.values(val).map(function (val) {
-                        if (val.toString().indexOf("fn:") >= 0) {
-                            var temp = val.toString().split(':');
-                            val = temp[1];
-                            return val;
-                        } else {
-                            return '\'' + val + '\'';
-                        }
-                    }).join(',') + ')';
-            }).join(',');
-        } else {
-            fileds = Object.keys(values).map(function (val) {
-                return '`' + val + '`';
-            }).join(',');
-            valList = '(' + Object.values(values).map(function (val) {
                     if (val.toString().indexOf("fn:") >= 0) {
                         var temp = val.toString().split(':');
                         val = temp[1];
@@ -72,6 +58,20 @@ module.exports = {
                         return '\'' + val + '\'';
                     }
                 }).join(',') + ')';
+            }).join(',');
+        } else {
+            fileds = Object.keys(values).map(function (val) {
+                return '`' + val + '`';
+            }).join(',');
+            valList = '(' + Object.values(values).map(function (val) {
+                if (val.toString().indexOf("fn:") >= 0) {
+                    var temp = val.toString().split(':');
+                    val = temp[1];
+                    return val;
+                } else {
+                    return '\'' + val + '\'';
+                }
+            }).join(',') + ')';
         }
         this._insert = this._insert.concat('(' + fileds + ')', ' VALUES ', valList);
         this._type = 'insert';
@@ -89,8 +89,8 @@ module.exports = {
             }).join(',');
             valList = values.map(function (val) {
                 return '(' + Object.values(val).map(function (val) {
-                        return '`' + val + '`';
-                    }).join(',') + ')';
+                    return '`' + val + '`';
+                }).join(',') + ')';
             }).join(',')
         } else {
             fileds = Object.keys(values).map(function (val) {
@@ -223,7 +223,7 @@ module.exports = {
             } else {
                 let setArray = [];
                 for (var key in arguments[0]) {
-                    if (typeof(arguments[0][key]) == 'string' && arguments[0][key].search(/[\+\-\*/]/ig) != -1) {
+                    if (typeof(arguments[0][key]) == 'string' && arguments[0][key].search(/[\+\-\*]/ig) != -1) {
                         setArray.push(' `' + key + '`=' + arguments[0][key] + ' ');
                     } else {
                         setArray.push(' `' + key + '`=\'' + arguments[0][key] + '\'');
@@ -248,16 +248,16 @@ module.exports = {
                 let whereArray = [];
                 for (var key in firstPrm) {
                     let safeKey = (key.indexOf(".") == -1) ? key : key.split('.').map(function (v,i,arr) {
-                            return (i==0)?v:'`'+v+'`';
-                        }).join('.');
+                        return (i==0)?v:'`'+v+'`';
+                    }).join('.');
                     if (firstPrm[key] instanceof Object) {
                         if (firstPrm[key].length && firstPrm[key][0] instanceof Object) {
                             firstPrm[key].forEach(function (current, index, arr) {
                                 switch (current[0].toLowerCase()) {
                                     case 'in': {
                                         whereArray.push('`' + safeKey + '` in' + '('.concat(current[1].map(function (v, i, arr) {
-                                                return '\''.concat(v).concat('\'');
-                                            }).join(',').concat(')')));
+                                            return '\''.concat(v).concat('\'');
+                                        }).join(',').concat(')')));
                                         break;
                                     }
                                     case 'between': {
@@ -277,8 +277,8 @@ module.exports = {
                             switch (firstPrm[key][0].toLowerCase()) {
                                 case 'in': {
                                     whereArray.push(safeKey + ' in' + '('.concat(firstPrm[key][1].map(function (current, index, arr) {
-                                            return '\''.concat(current).concat('\'');
-                                        }).join(',').concat(')')));
+                                        return '\''.concat(current).concat('\'');
+                                    }).join(',').concat(')')));
                                     break;
                                 }
                                 case 'between': {
