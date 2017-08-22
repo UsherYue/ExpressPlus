@@ -36,6 +36,7 @@ module.exports = {
         this._delete = '';
         this._set = '';
         this._orderBy = '';
+        this._where = '';
         this._limit = '';
     },
     insertInto: function (tableName, values) {
@@ -215,23 +216,36 @@ module.exports = {
         return this;
     },
     set: function () {
-        if (arguments.length == 0) {
-            console.log('miss set variables...');
-        } else if (arguments.length == 1) {
+        let argLen = arguments.length;
+        if (argLen == 1) {
             if (typeof(arguments[0]) == 'string') {
                 this._set = ' set ' + arguments[0] + ' ';
             } else {
                 let setArray = [];
-                for (var key in arguments[0]) {
-                    if (typeof(arguments[0][key]) == 'string' && arguments[0][key].search(/[\+\-\*]/ig) != -1) {
-                        setArray.push(' `' + key + '`=' + arguments[0][key] + ' ');
+                let objArg = arguments[0];
+                for (var field in  objArg) {
+                    let fieldVal = objArg[field];
+                    if (typeof(fieldVal) == 'string') {
+                        let result = /^expr:(.+)/ig.exec(fieldVal);
+                        if (result) {
+                            setArray.push(`\`${field}\`=${result[1]}`);
+                        } else {
+                            setArray.push(`\`${field}\`='${fieldVal}'`);
+                        }
+                    } else if (Object.prototype.toString.call(fieldVal) === `[object Array]`) {
+                        //array set方法的处理
+                        if (fieldVal.length >= 3) {
+                            setArray.push(`${field}=${fieldVal[1]}${fieldVal[0]}${fieldVal[2]}`)
+                        }
                     } else {
-                        setArray.push(' `' + key + '`=\'' + arguments[0][key] + '\'');
+                        setArray.push(`\`${field}\`='${fieldVal}'`);
                     }
                 }
                 this._set = ' set ' + setArray.join(',') + ' ';
             }
-        } else {
+        } else if (argLen > 1) {
+            //保证参数是字符串数组
+            //待完善
             let setArray = Object.values(arguments);
             this._set = ' set ' + setArray.join(',') + ' ';
         }
@@ -247,8 +261,8 @@ module.exports = {
             } else {
                 let whereArray = [];
                 for (var key in firstPrm) {
-                    let safeKey = (key.indexOf(".") == -1) ? key : key.split('.').map(function (v,i,arr) {
-                        return (i==0)?v:'`'+v+'`';
+                    let safeKey = (key.indexOf(".") == -1) ? key : key.split('.').map(function (v, i, arr) {
+                        return (i == 0) ? v : '`' + v + '`';
                     }).join('.');
                     if (firstPrm[key] instanceof Object) {
                         if (firstPrm[key].length && firstPrm[key][0] instanceof Object) {
@@ -286,11 +300,11 @@ module.exports = {
                                     break;
                                 }
                                 case 'like': {
-                                    whereArray.push(safeKey+ ' like \'' + firstPrm[key][1] + '\'');
+                                    whereArray.push(safeKey + ' like \'' + firstPrm[key][1] + '\'');
                                     break;
                                 }
                                 default: {
-                                    whereArray.push(safeKey  + firstPrm[key][0] + ' \'' + firstPrm[key][1] + '\'');
+                                    whereArray.push(safeKey + firstPrm[key][0] + ' \'' + firstPrm[key][1] + '\'');
                                 }
                             }
                         }
@@ -298,7 +312,7 @@ module.exports = {
                         if (typeof(firstPrm[key]) == 'string' && firstPrm[key].search(/[<>=]/ig) != -1) {
                             whereArray.push(safeKey + firstPrm[key] + ' ');
                         } else {
-                            whereArray.push(safeKey+ '=\'' + firstPrm[key] + '\'');
+                            whereArray.push(safeKey + '=\'' + firstPrm[key] + '\'');
                         }
                     }
                 }

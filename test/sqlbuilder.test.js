@@ -27,4 +27,14 @@ describe('测试sql工具', function () {
         console.log(sql);
         done();
     });
+
+    it('sql set测试', done => {
+        let $set = [];
+        $set['a']=['+','a',1];
+        $set['b']=['%','b','4'];
+        $set['e']='expr:errcount+1';
+        let sql=sqlBuilder.update('a').set($set).sql();
+        console.log(sql);
+        done();
+    });
 })
