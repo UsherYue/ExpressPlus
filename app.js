@@ -386,6 +386,7 @@ delete process.env["DEBUG_FD"];
                 //logging:true,
                 dialectOptions: (!global.config.dbConfig.dialectOptions) ? {} : global.config.dbConfig.dialectOptions,
                 dialect: global.config.dbConfig.dbtype,
+                timezone: '+08:00',
                 replication: {
                     read: (!global.config.dbConfig.read) ? {} : global.config.dbConfig.read,
                     write: (!global.config.dbConfig.write) ? {} : global.config.dbConfig.write
