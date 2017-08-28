@@ -16,7 +16,7 @@ var path = require('path');
 var express = require('express');
 var bodyParser = require('body-parser');
 var session = require('express-session');
-var cookieParser = require('cookie-parser');
+var FileStreamRotator = require('file-stream-rotator');
 
 //用户模块
 var app = express();
@@ -79,6 +79,30 @@ app.use(session({
 
 //delete DEBUG_FD
 delete process.env["DEBUG_FD"];
+
+//runtime directory
+let logDirectory = path.join(__dirname, 'runtime')
+fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory)
+
+//create runtime log files
+logger.token('param', function(req, res){
+    let list = [];
+    if(Object.is(req.method.toLowerCase(),'post') && Object.keys(req.body).length > 0){
+        for(let [k,v] of Object.entries(req.body)){
+            list = [...list,`${k}=${v}`]
+        }
+    }
+    list = list.join("&");
+    return list || '-';
+});
+let accessLogStream = FileStreamRotator.getStream({
+    date_format: 'YYYYMMDD',
+    filename: path.join(logDirectory, 'access-%DATE%.log'),
+    frequency: 'daily',
+    verbose: false
+})
+logger.format('RUNTIME', '[RUNTIME]:remote-addr - :remote-user [:date] ":method :url :param HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"');
+app.use(logger('RUNTIME', {stream: accessLogStream}));
 
 //config加载
 ({
