@@ -15,9 +15,8 @@ var path = require('path');
 
 var express = require('express');
 var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
 var session = require('express-session');
-var FileStreamRotator = require('file-stream-rotator');
+var cookieParser = require('cookie-parser');
 
 //用户模块
 var app = express();
@@ -81,30 +80,6 @@ app.use(session({
 //delete DEBUG_FD
 delete process.env["DEBUG_FD"];
 
-//runtime directory
-let logDirectory = path.join(__dirname, 'runtime')
-fs.existsSync(logDirectory) || fs.mkdirSync(logDirectory)
-
-//create runtime log files
-logger.token('param', function(req, res){
-    let list = [];
-    if(Object.is(req.method.toLowerCase(),'post') && Object.keys(req.body).length > 0){
-        for(let [k,v] of Object.entries(req.body)){
-            list = [...list,`${k}=${v}`]
-        }
-    }
-    list = list.join("&");
-    return list || '-';
-});
-let accessLogStream = FileStreamRotator.getStream({
-    date_format: 'YYYYMMDD',
-    filename: path.join(logDirectory, 'access-%DATE%.log'),
-    frequency: 'daily',
-    verbose: false
-})
-logger.format('RUNTIME', '[RUNTIME]:remote-addr - :remote-user [:date] ":method :url :param HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"');
-app.use(logger('RUNTIME', {stream: accessLogStream}));
-
 //config加载
 ({
     routers: [],
@@ -116,11 +91,11 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
         this._initStatic();
         this._initTemplate();
         this._initMiddleWare();
+        this._initCommonFunc();
         this._initI18N(__dirname + "/lang", '.json');
         this._initApp(__dirname + "/common/");
         this._initRouter(__dirname + '/routes/');
         this._initModules(__dirname + '/models/');
-        this._initCommonFunc();
         this._initProcess();
     },
     _initRouter: function (path) {
@@ -187,7 +162,7 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
                     i18n.setLocale(local)
                 };
                 global.getLocale = () => i18n.getLocale(...arguments);
-                global.getLocales =()=>i18n.getCatalog();
+                global.getLocales = () => i18n.getCatalog();
             }
         } catch (ex) {
             console.error(ex.toString());
@@ -329,7 +304,7 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
         Sequelize.prototype.select = function (sql) {
             return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
                 result.firstRow = function () {
-                    return this.length == 0 ? null : this[0];
+                    return Array.isArray(this)&&this.length == 0 ? null : this[0];
                 };
                 return result;
             }, function (ex) {
@@ -379,26 +354,25 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
                     let total = 0;
                     $this.query(querySql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultItems) {
                         if (retTotal) {
-                            if (retTotal) {
-                                $this.query(countSql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultCount) {
-                                    let count = resultCount.length > 1 ? resultCount.length : (resultCount.length == 1 ? resultCount[0].count : 0);
-                                    resolve({
-                                        total: count,
-                                        pageCount: parseInt(count / pageCount) + ((count % pageCount > 0) ? 1 : 0),
-                                        data: resultItems,
-                                        currentPage: currentPage
-                                    });
-                                }).catch(function (err) {
-                                    reject(err);
-                                });
-                            } else {
+                            $this.query(countSql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultCount) {
+                                let count = resultCount.length > 1 ? resultCount.length : (resultCount.length == 1 ? resultCount[0].count : 0);
                                 resolve({
-                                    // total: 0,
-                                    // pageCount: 9999,
-                                    data: resultItems,
+                                    total: count,
+                                    pageCount: parseInt(count / pageCount) + ((count % pageCount > 0) ? 1 : 0),
+                                    list: resultItems,
                                     currentPage: currentPage
                                 });
-                            }
+                            }).catch(function (err) {
+                                reject(err);
+                            });
+                        } else {
+                            resolve({
+                                total: 0,
+                                pagesize: parseInt(pageCount),
+                                totalpage:0,
+                                list: resultItems,
+                                current: parseInt(currentPage)
+                            });
                         }
                     }).catch(function (err) {
                         resolve(false);
@@ -411,7 +385,6 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
                 //logging:true,
                 dialectOptions: (!global.config.dbConfig.dialectOptions) ? {} : global.config.dbConfig.dialectOptions,
                 dialect: global.config.dbConfig.dbtype,
-                timezone: '+08:00',
                 replication: {
                     read: (!global.config.dbConfig.read) ? {} : global.config.dbConfig.read,
                     write: (!global.config.dbConfig.write) ? {} : global.config.dbConfig.write
@@ -435,7 +408,7 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
         let encoding = (config.templateConfig && config.templateConfig.encoding) ? config.templateConfig.encoding : 'utf-8';
         switch (viewEngine) {
             case 'artTemplate': {
-                app.engine(defaultTplExt.replace(".",""), require('express-art-template'));
+                app.engine(defaultTplExt.replace(".", ""), require('express-art-template'));
                 app.set('view options', {
                     base: '',
                     debug: true,
@@ -472,23 +445,27 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
             }
         );
         global.newSqlBuilder = function () {
-            let sqlModel=Object.create(sqlbuilder);
-            sqlModel.do=()=>{
-                let sql=sqlModel.sql();
-                if(/.*insert.*/i.test(sql)){
+            let sqlModel = Object.create(sqlbuilder);
+            sqlModel.do = () => {
+                let sql = sqlModel.sql();
+                if (/.*insert.*/i.test(sql)) {
+                    console.log(sql);
                     return db.insert(sql);
-                }else if(/.*select.*/i.test(sql)){
+                } else if (/.*select.*/i.test(sql)) {
                     return db.select(sql);
-                }else if(/.*update.*/i.test(sql)){
+                } else if (/.*update.*/i.test(sql)) {
                     return db.update(sql);
-                }else if(/.*delete.*/i.test(sql)){
+                } else if (/.*delete.*/i.test(sql)) {
                     return db.delete(sql);
                 }
                 return sqlModel.sql();
             }
+            sqlModel.getPages = (currentPage, pageCount, retTotal) => {
+                return db.getPages(sqlModel.sql(), currentPage, pageCount, retTotal);
+            };
             return sqlModel;
         }
-        global.sqlBuilder=newSqlBuilder();
+        global.sqlBuilder = newSqlBuilder();
         global.co = require('co');
     },
     _initCommonFunc: function () {
@@ -528,7 +505,65 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
             }
             return result;
         }
-        global.nowTs = () => Math.round(Date.now() / 1000);
+        /**
+         * 获取时间可读格式
+         * @param hourOnly
+         * @returns {string}
+         */
+        Date.prototype.toString = function (hourOnly = false) {
+            if (!hourOnly) {
+                return this.getFullYear()
+                    + "-" + (this.getMonth() > 8 ? this.getMonth()+1 : "0" + (this.getMonth()))
+                    + "-" + (this.getDate() > 9 ? this.getDate() : "0" + this.getDate())
+                    + " " + (this.getHours() > 9 ? this.getHours() : "0" + this.getHours())
+                    + ":" + (this.getMinutes() > 9 ? this.getMinutes() : "0" + this.getMinutes())
+                    + ":" + (this.getSeconds() > 9 ? this.getSeconds() : "0" + this.getSeconds());
+            } else {
+                return (this.getHours() > 9 ? this.getHours() : "0" + this.getHours())
+                    + ":" + (this.getMinutes() > 9 ? this.getMinutes() : "0" + this.getMinutes())
+                    + ":" + (this.getSeconds() > 9 ? this.getSeconds() : "0" + this.getSeconds());
+            }
+        }
+        /**
+         * strtotime
+         * @param str
+         * @returns {number}
+         */
+        Date.strtotime = (str) => {
+            var arr = str.split(' ');
+            var day = arr[0].split('-');
+            arr[1] = (arr[1] == null) ? '0:0:0' : arr[1];
+            var time = arr[1].split(':');
+            for (var i =0;i<day.length;i++) {
+                day[i] = isNaN(parseInt(day[i])) ? 0 : parseInt(day[i]);
+            }
+            for (var i=0;i<time.length;i++) {
+                time[i] = isNaN(parseInt(time[i])) ? 0 : parseInt(time[i]);
+            }
+            return ((new Date(day[0], day[1] - 1, day[2], time[0], time[1], time[2])).getTime()) / 1000;
+        }
+        /**
+         *
+         * @returns {number}
+         */
+        Date.time=()=>{
+            return parseInt(Date.now() / 1000);
+        }
+        /**
+         *
+         * @constructor
+         */
+        Date.EarlyMorningTime=()=>{
+            let date=new Date();
+            let ret=parseInt(Date.parse(date.getFullYear()+"-"+date.getMonth()+"-"+date.getDate())/1000);
+            return ret;
+        }
+
+        //define constraint
+        global.defineConstraint = (obj, k, v) => {
+            obj.__defineGetter__(k, () => v);
+        };
+        global.nowTs=global.time = () => Math.round(Date.now() / 1000);
         global.isArray = (o) => {
             return Object.prototype.toString.call(o) === `[object Array]`;
         }
@@ -539,11 +574,14 @@ app.use(logger('RUNTIME', {stream: accessLogStream}));
             }
             return t;
         };
+        global.t = (obj) => Object.prototype.toString.call(obj);
+        global.format = global.sprintf = require('util').format;
         global.filterValue = (val, defaultvalue) => (typeof(val) == 'undefined' || !val) ? defaultvalue : val;
         global.return = (ret, data, msg) => ({ret: ret, data: data, msg: msg})
-        global.error = (data, msg) => ({ret: 0, data: data, msg: msg});
-        global.success = (data, msg) => ({ret: 1, data: data, msg: msg});
+        global.error = (data, msg) => ({status: 0, data: data, info: msg});
+        global.success = (data, msg) => ({status: 1, data: data, info: msg});
     },
+
     _initMiddleWare: function () {
         global.mw = {
             crosser: (allowOrigin, allowHeader, allowMethod, allowCredential) => {
