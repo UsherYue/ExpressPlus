@@ -33,5 +33,19 @@
     "sequelize": "^3.29.0",
     "serve-favicon": "^2.4.3",
     "session-file-store": "^1.0.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UsherYue/ExpressPlus.git"
+  },
+  "keywords": [
+    "express",
+    "expressplus"
+  ],
+  "author": "usher.yue",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/UsherYue/ExpressPlus/issues"
+  },
+  "homepage": "https://github.com/UsherYue/ExpressPlus#readme"
 }
