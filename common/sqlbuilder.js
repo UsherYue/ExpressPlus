@@ -48,7 +48,7 @@ module.exports = {
         if ($this._isArray(values) && values.length > 0) {
             fileds = Object.keys(values[0]).map(function (val) {
                 return '`' + val + '`';
-            }).join(',');
+            });
             valList = values.map(function (val) {
                 return '(' + Object.values(val).map(function (val) {
                     if (val.toString().indexOf("fn:") >= 0) {
@@ -258,7 +258,7 @@ module.exports = {
             let firstPrm = arguments[0]
             if (typeof(firstPrm) == 'string') {
                 return '  (' + firstPrm + ') ';
-            } else {
+            } else if (Object.prototype.toString.call(firstPrm) == '[object Object]') {
                 let whereArray = [];
                 for (var key in firstPrm) {
                     let safeKey = (key.indexOf(".") == -1) ? key : key.split('.').map(function (v, i, arr) {
@@ -290,9 +290,11 @@ module.exports = {
                         } else {
                             switch (firstPrm[key][0].toLowerCase()) {
                                 case 'in': {
-                                    whereArray.push(safeKey + ' in' + '('.concat(firstPrm[key][1].map(function (current, index, arr) {
-                                        return '\''.concat(current).concat('\'');
-                                    }).join(',').concat(')')));
+                                    if (firstPrm[key][1] && firstPrm[key][1].map) {
+                                        whereArray.push(safeKey + ' in' + '('.concat(firstPrm[key][1].map(function (current, index, arr) {
+                                            return '\''.concat(current).concat('\'');
+                                        }).join(',').concat(')')));
+                                    }
                                     break;
                                 }
                                 case 'between': {
@@ -317,6 +319,8 @@ module.exports = {
                     }
                 }
                 return '  (' + whereArray.join(' and ') + ') ';
+            } else if (Object.prototype.toString.call(firstPrm) == '[object Array]') {
+                return '  (' + firstPrm.join(' and ') + ') ';
             }
         } else {
             let setArray = Object.values(arguments);
@@ -324,8 +328,22 @@ module.exports = {
         }
     },
     where: function () {
-        this._where = ' where ' + this._parseCondition(arguments);
-        this._lastCondition = 'where';
+        if (arguments.length == 0) {
+            return this;
+        } else if (arguments.length == 1) {
+            let arg = arguments[0];
+            if ((typeof arg == 'string') && arg.constructor == String && arg == '') {
+                return this;
+            } else if ((typeof arg == 'string') && arg.constructor == String) {
+                this._where = ' where ' + this._parseCondition(arguments);
+            } else {
+                if (Object.keys(arg).length == 0) {
+                    return this;
+                }
+                this._where = ' where ' + this._parseCondition(arguments);
+            }
+            this._lastCondition = 'where';
+        }
         return this;
     },
     and: function () {
@@ -351,20 +369,65 @@ module.exports = {
         return this;
     },
     leftJoin: function (tableName) {
-        this._join += ' left join ' + tableName;
-        return this;
+        if (typeof joinCondition == 'string' && joinCondition.constructor == String) {
+            this._join += ' left join ' + joinCondition;
+        } else if (Array.isArray(joinCondition)) {
+            //join on 一条
+            if (typeof joinCondition[0] == 'string' && joinCondition[0].constructor == String) {
+                this._join += ` left join  ${joinCondition[0]} on ${joinCondition[1]} `;
+            } else if (Array.isArray(joinCondition[0])) {
+                //多条join
+                for (let [itemJoin, itemOn] of joinCondition) {
+                    this._join += ` left join  ${itemJoin} on ${itemOn} `;
+                }
+            }
+        }
     },
-    innerJoin: function (tableName) {
-        this._join += '  join ' + tableName;
+    innerJoin: function (joinCondition) {
+        if (typeof joinCondition == 'string' && joinCondition.constructor == String) {
+            this._join += '  join ' + joinCondition;
+        } else if (Array.isArray(joinCondition)) {
+            //join on 一条
+            if (typeof joinCondition[0] == 'string' && joinCondition[0].constructor == String) {
+                this._join += ` join  ${joinCondition[0]} on ${joinCondition[1]} `;
+            } else if (Array.isArray(joinCondition[0])) {
+                //多条join
+                for (let [itemJoin, itemOn] of joinCondition) {
+                    this._join += ` join  ${itemJoin} on ${itemOn} `;
+                }
+            }
+        }
         return this;
     },
     rightJoin: function (tableName) {
-        this._join += ' right join ' + tableName;
-        return this;
+        if (typeof joinCondition == 'string' && joinCondition.constructor == String) {
+            this._join += ' right join ' + joinCondition;
+        } else if (Array.isArray(joinCondition)) {
+            //join on 一条
+            if (typeof joinCondition[0] == 'string' && joinCondition[0].constructor == String) {
+                this._join += ` right join  ${joinCondition[0]} on ${joinCondition[1]} `;
+            } else if (Array.isArray(joinCondition[0])) {
+                //多条join
+                for (let [itemJoin, itemOn] of joinCondition) {
+                    this._join += ` right join  ${itemJoin} on ${itemOn} `;
+                }
+            }
+        }
     },
     fullJoin: function (tableName) {
-        this._join += ' full join ' + tableName;
-        return this;
+        if (typeof joinCondition == 'string' && joinCondition.constructor == String) {
+            this._join += ' full join ' + joinCondition;
+        } else if (Array.isArray(joinCondition)) {
+            //join on 一条
+            if (typeof joinCondition[0] == 'string' && joinCondition[0].constructor == String) {
+                this._join += ` full join  ${joinCondition[0]} on ${joinCondition[1]} `;
+            } else if (Array.isArray(joinCondition[0])) {
+                //多条join
+                for (let [itemJoin, itemOn] of joinCondition) {
+                    this._join += ` full join  ${itemJoin} on ${itemOn} `;
+                }
+            }
+        }
     },
     on: function (condition) {
         this._join += ' on ' + condition;

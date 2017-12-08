@@ -77,6 +77,9 @@ app.use(session({
     }
 }));
 
+//接口监控后期修改为动态加载
+//app.use(require('./middleware/BusinessMonitor'));
+
 //delete DEBUG_FD
 delete process.env["DEBUG_FD"];
 
@@ -247,8 +250,11 @@ delete process.env["DEBUG_FD"];
         if (redisServerPassword) {
             opt.password = global.config.redisConfig.password;
         }
-        let redis = require("redis"),
-            client = redis.createClient(opt);
+        let redis = require("redis");
+        let bluebird = require("bluebird");
+        bluebird.promisifyAll(redis.RedisClient.prototype);
+        bluebird.promisifyAll(redis.Multi.prototype);
+        let client = redis.createClient(opt);
         client.on('error', function (err) {
             console.error("redis error....");
         })
@@ -303,9 +309,6 @@ delete process.env["DEBUG_FD"];
         }
         Sequelize.prototype.select = function (sql) {
             return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
-                result.firstRow = function () {
-                    return Array.isArray(this)&&this.length == 0 ? null : this[0];
-                };
                 return result;
             }, function (ex) {
                 return false;
@@ -343,13 +346,13 @@ delete process.env["DEBUG_FD"];
             });
         };
         try {
-            Sequelize.prototype.getPages = function (sql, currentPage, pageCount, retTotal) {
+            Sequelize.prototype.getPages = function (sql, currentPage, pageCount, retTotal, countFields = 1) {
                 currentPage = (currentPage <= 0) ? 1 : currentPage;
                 pageCount = (pageCount <= 0) ? 10 : pageCount;
                 let $this = this;
                 let begin = (currentPage - 1) * pageCount;
                 return new Promise(function (resolve, reject) {
-                    let countSql = sql.trim().toLowerCase().replace(/(select\b)(.+)\b(from.+)\b(group.+)\b(order.+)/ig, '$1 count(1) as `count` $3 $4');
+                    let countSql = sql.trim().toLowerCase().removeSubRight('limit').removeSubRight('order').replace(/(select\b)(.+)(\bfrom\b.+)(\bgroup\b.+)?(\border\b.+)?/ig, `$1 count(${countFields}) as \`count\` $3 $4`);
                     let querySql = sql + ' limit ' + begin.toString() + ',' + pageCount.toString();
                     let total = 0;
                     $this.query(querySql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultItems) {
@@ -358,18 +361,19 @@ delete process.env["DEBUG_FD"];
                                 let count = resultCount.length > 1 ? resultCount.length : (resultCount.length == 1 ? resultCount[0].count : 0);
                                 resolve({
                                     total: count,
-                                    pageCount: parseInt(count / pageCount) + ((count % pageCount > 0) ? 1 : 0),
+                                    pagesize: parseInt(pageCount),
+                                    totalpage: parseInt(count / pageCount) + ((count % pageCount > 0) ? 1 : 0),
                                     list: resultItems,
-                                    currentPage: currentPage
+                                    current: parseInt(currentPage)
                                 });
                             }).catch(function (err) {
                                 reject(err);
                             });
                         } else {
                             resolve({
-                                total: 0,
+                                total: 99999,
                                 pagesize: parseInt(pageCount),
-                                totalpage:0,
+                                totalpage: 999,
                                 list: resultItems,
                                 current: parseInt(currentPage)
                             });
@@ -382,7 +386,7 @@ delete process.env["DEBUG_FD"];
             var sequelize = new Sequelize(global.config.dbConfig.dbname, null, null, {
                 //支持bigint issues
                 //https://github.com/sequelize/sequelize/issues/1222
-                //logging:true,
+                logging: false,
                 dialectOptions: (!global.config.dbConfig.dialectOptions) ? {} : global.config.dbConfig.dialectOptions,
                 dialect: global.config.dbConfig.dbtype,
                 replication: {
@@ -446,22 +450,22 @@ delete process.env["DEBUG_FD"];
         );
         global.newSqlBuilder = function () {
             let sqlModel = Object.create(sqlbuilder);
+            //存在bug 需要修复
             sqlModel.do = () => {
-                let sql = sqlModel.sql();
-                if (/.*insert.*/i.test(sql)) {
-                    console.log(sql);
+                let sql = sqlModel.sql().trimLeft();
+                if (/^insert\b.*/i.test(sql)) {
                     return db.insert(sql);
-                } else if (/.*select.*/i.test(sql)) {
+                } else if (/^select.*/i.test(sql)) {
                     return db.select(sql);
-                } else if (/.*update.*/i.test(sql)) {
+                } else if (/^update.*/i.test(sql)) {
                     return db.update(sql);
-                } else if (/.*delete.*/i.test(sql)) {
+                } else if (/^delete.*/i.test(sql)) {
                     return db.delete(sql);
                 }
                 return sqlModel.sql();
             }
-            sqlModel.getPages = (currentPage, pageCount, retTotal) => {
-                return db.getPages(sqlModel.sql(), currentPage, pageCount, retTotal);
+            sqlModel.getPages = (currentPage, pageCount, retTotal, countFields = 1) => {
+                return db.getPages(sqlModel.sql(), currentPage, pageCount, retTotal, countFields);
             };
             return sqlModel;
         }
@@ -476,6 +480,16 @@ delete process.env["DEBUG_FD"];
                     values.push(obj[key]);
                 }
                 return values;
+            }
+        }
+        /**
+         * 合并
+         * @param targe
+         * @param source
+         */
+        Object.merge = (targe, source) => {
+            for (var k in source) {
+                targe[k] = source[k];
             }
         }
         if (!Date.now) {
@@ -506,6 +520,58 @@ delete process.env["DEBUG_FD"];
             return result;
         }
         /**
+         * trimLeft
+         * @returns {string}
+         */
+        String.prototype.trimLeft = function () {
+            var i = 0;
+            for (; i < this.length && this.charAt(i) == " "; i++) ;
+            return this.substring(i, this.length);
+        }
+        /**
+         * trimRight
+         * @returns {string}
+         */
+        String.prototype.trimRigth = function trimRight() {
+            var i = this.length - 1;
+            for (; i > 0 && this.charAt(i) == " "; i--) ;
+            return this.substring(0, ++i);
+        }
+        /**
+         * remove right
+         * @param str
+         * @returns {*}
+         */
+        String.prototype.removeSubRight = function (str) {
+            let rightIndex = this.indexOf(str);
+            if (-1 == rightIndex) {
+                return this;
+            }
+            return this.substr(0, rightIndex - 1);
+        }
+        /**
+         * toUnicode
+         * @returns {string}
+         */
+        String.prototype.toUnicode = function () {
+            var ret = "";
+            for (var i = 0; i < this.length; i++) {
+                if (/[\u4e00-\u9fa5]/i.test(this[i])) {
+                    ret += "\\u" + this.charCodeAt(i).toString(16);
+                } else {
+                    ret += this[i];
+                }
+            }
+            return ret;
+        }
+        /**
+         * isString
+         * @returns {boolean}
+         */
+        String.isString = function (str) {
+            return (typeof str == 'string') && str.constructor == String;
+        }
+        /**
          * 获取时间可读格式
          * @param hourOnly
          * @returns {string}
@@ -513,7 +579,7 @@ delete process.env["DEBUG_FD"];
         Date.prototype.toString = function (hourOnly = false) {
             if (!hourOnly) {
                 return this.getFullYear()
-                    + "-" + (this.getMonth() > 8 ? this.getMonth()+1 : "0" + (this.getMonth()))
+                    + "-" + (this.getMonth() > 8 ? this.getMonth() + 1 : "0" + (this.getMonth()))
                     + "-" + (this.getDate() > 9 ? this.getDate() : "0" + this.getDate())
                     + " " + (this.getHours() > 9 ? this.getHours() : "0" + this.getHours())
                     + ":" + (this.getMinutes() > 9 ? this.getMinutes() : "0" + this.getMinutes())
@@ -525,6 +591,27 @@ delete process.env["DEBUG_FD"];
             }
         }
         /**
+         * format
+         * @param fmt
+         * @returns {*}
+         * @constructor
+         */
+        Date.prototype.format = function (fmt) {
+            var o = {
+                "M+": this.getMonth() + 1, //月份
+                "d+": this.getDate(), //日
+                "h+": this.getHours(), //小时
+                "m+": this.getMinutes(), //分
+                "s+": this.getSeconds(), //秒
+                "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+                "S": this.getMilliseconds() //毫秒
+            };
+            if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+            for (var k in o)
+                if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+            return fmt;
+        }
+        /**
          * strtotime
          * @param str
          * @returns {number}
@@ -534,10 +621,10 @@ delete process.env["DEBUG_FD"];
             var day = arr[0].split('-');
             arr[1] = (arr[1] == null) ? '0:0:0' : arr[1];
             var time = arr[1].split(':');
-            for (var i =0;i<day.length;i++) {
+            for (var i = 0; i < day.length; i++) {
                 day[i] = isNaN(parseInt(day[i])) ? 0 : parseInt(day[i]);
             }
-            for (var i=0;i<time.length;i++) {
+            for (var i = 0; i < time.length; i++) {
                 time[i] = isNaN(parseInt(time[i])) ? 0 : parseInt(time[i]);
             }
             return ((new Date(day[0], day[1] - 1, day[2], time[0], time[1], time[2])).getTime()) / 1000;
@@ -546,27 +633,39 @@ delete process.env["DEBUG_FD"];
          *
          * @returns {number}
          */
-        Date.time=()=>{
+        Date.time = () => {
             return parseInt(Date.now() / 1000);
         }
         /**
          *
          * @constructor
          */
-        Date.EarlyMorningTime=()=>{
-            let date=new Date();
-            let ret=parseInt(Date.parse(date.getFullYear()+"-"+date.getMonth()+"-"+date.getDate())/1000);
+        Date.EarlyMorningTime = () => {
+            let date = new Date();
+            let ret = parseInt(Date.parse(date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate()) / 1000);
             return ret;
         }
+        /**
+         * js数组合并去重
+         * @returns {Array}
+         */
+        Array.prototype.unique = function () {
+            let m = {};
+            for (let v of this) {
+                m[v] = true;
+            }
+            return Object.keys(m);
+        };
 
         //define constraint
         global.defineConstraint = (obj, k, v) => {
             obj.__defineGetter__(k, () => v);
         };
-        global.nowTs=global.time = () => Math.round(Date.now() / 1000);
+        global.nowTs = global.time = () => Math.round(Date.now() / 1000);
         global.isArray = (o) => {
             return Object.prototype.toString.call(o) === `[object Array]`;
         }
+        global.isString = (str) => (typeof str == 'string') && str.constructor == String;
         global.deepClone = (o) => {
             var t = o instanceof Array ? [] : {};
             for (var f in o) {
@@ -574,6 +673,8 @@ delete process.env["DEBUG_FD"];
             }
             return t;
         };
+        global.isTrueObject = obj => Array.isArray(obj) ? Boolean(obj.length) : Boolean(obj);
+        global.isFalseObject= obj => (!(Array.isArray(obj) ? Boolean(obj.length) : Boolean(obj)));
         global.t = (obj) => Object.prototype.toString.call(obj);
         global.format = global.sprintf = require('util').format;
         global.filterValue = (val, defaultvalue) => (typeof(val) == 'undefined' || !val) ? defaultvalue : val;
@@ -581,8 +682,12 @@ delete process.env["DEBUG_FD"];
         global.error = (data, msg) => ({status: 0, data: data, info: msg});
         global.success = (data, msg) => ({status: 1, data: data, info: msg});
     },
-
     _initMiddleWare: function () {
+        if(config.middleWare&&config.middleWare.length){
+            for(let middleWare of config.middleWare){
+                app.use(require(`./middleware/${middleWare}`));
+            }
+        }
         global.mw = {
             crosser: (allowOrigin, allowHeader, allowMethod, allowCredential) => {
                 return (req, res, next) => {
@@ -629,6 +734,11 @@ app.use(function (req, res, next) {
     var err = new Error('Not Found');
     err.status = 404;
     next(err);
+});
+
+//处理异常
+process.on('unhandledRejection', (reason, p) => {
+    console.log("Unhandled Rejection at: Promise ", p, " reason: ", reason);
 });
 
 //错误处理
