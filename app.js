@@ -224,7 +224,7 @@ delete process.env["DEBUG_FD"];
         }
     },
     _initRedis: function () {
-        if (!global.config.redisConfig || !global.config.redisConfig.host) {
+        if (!global.config||!global.config.redisConfig || !global.config.redisConfig.host) {
             return;
         }
         let redisServerIp = global.config.redisConfig.host;
@@ -301,11 +301,11 @@ delete process.env["DEBUG_FD"];
     },
     _initDb: function ($this) {
         let Sequelize = require('sequelize');
-        if (!global.config.dbConfig.dbtype) {
-            console.error('miss dbtype conf.....');
+        if (!global.config||!global.config.dbConfig||!global.config.dbConfig.dbtype) {
+            return ;
         }
-        if (!global.config.dbConfig.dbname) {
-            console.error('miss dbname  conf.....');
+        if (!global.config||!global.config.dbConfig||!global.config.dbConfig.dbname) {
+            return ;
         }
         Sequelize.prototype.select = function (sql) {
             return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
@@ -386,6 +386,7 @@ delete process.env["DEBUG_FD"];
             var sequelize = new Sequelize(global.config.dbConfig.dbname, null, null, {
                 //支持bigint issues
                 //https://github.com/sequelize/sequelize/issues/1222
+                timezone: '+08:00',
                 logging: false,
                 dialectOptions: (!global.config.dbConfig.dialectOptions) ? {} : global.config.dbConfig.dialectOptions,
                 dialect: global.config.dbConfig.dbtype,
@@ -519,6 +520,14 @@ delete process.env["DEBUG_FD"];
             }
             return result;
         }
+        var oldJsonParser=JSON.parse;
+        JSON.parse=(jsonStr)=>{
+            try{
+                return oldJsonParser(jsonStr);
+            }catch(ex){
+                return null;
+            }
+        };
         /**
          * trimLeft
          * @returns {string}
@@ -549,6 +558,7 @@ delete process.env["DEBUG_FD"];
             }
             return this.substr(0, rightIndex - 1);
         }
+
         /**
          * toUnicode
          * @returns {string}
@@ -656,6 +666,19 @@ delete process.env["DEBUG_FD"];
             }
             return Object.keys(m);
         };
+        /**
+         * inArray
+         * @param val
+         * @returns {boolean}
+         */
+        Array.prototype.inArray=function(val){
+            for(let v of this){
+                if(v==val){
+                    return true;
+                }
+            }
+            return false;
+        }
 
         //define constraint
         global.defineConstraint = (obj, k, v) => {
@@ -749,5 +772,6 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.send('server error:' + err.message);
 });
+
 
 module.exports = app;
