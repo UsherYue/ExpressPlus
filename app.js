@@ -443,6 +443,12 @@ delete process.env["DEBUG_FD"];
             };
             return router;
         }
+        //拦截器待实现
+        global.newFilter=function(){
+
+
+
+        };
         let files = fs.readdirSync(commonPath);
         files.forEach(function logArrayElements(element, index, array) {
                 let moduleName = element.replace(/(.*)\.js/ig, "$1");

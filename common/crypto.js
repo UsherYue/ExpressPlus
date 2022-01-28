@@ -1,10 +1,8 @@
 /**
- * 12XueSSO
  *  Created by usher.yue.
  * User: usher.yue
  * Date: 17/3/23
  * Time: 16:18
- * 心怀教育梦－烟台网格软件技术有限公司
  */
 
 "use strict";
@@ -14,6 +12,11 @@ var Buffer = require('buffer').Buffer
 
 module.exports = {
     md5: str => {
+        let hasher = crypto.createHash('md5');
+        hasher.update(str);
+        return hasher.digest('hex').toUpperCase();
+    },
+    md5LowerCase: str => {
         let hasher = crypto.createHash('md5');
         hasher.update(str);
         return hasher.digest('hex');

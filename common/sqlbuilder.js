@@ -1,5 +1,5 @@
 /**
- * 12XueSSO
+ * ExpressPlus
  *  Created by usher.yue.
  * User: usher.yue
  * Date: 17/1/9
@@ -56,6 +56,9 @@ module.exports = {
                         val = temp[1];
                         return val;
                     } else {
+                        if(val.toString().indexOf('\'')!=-1){
+                            val=val.toString().replace(/'/ig,'\\\'');
+                        }
                         return '\'' + val + '\'';
                     }
                 }).join(',') + ')';
@@ -70,7 +73,10 @@ module.exports = {
                     val = temp[1];
                     return val;
                 } else {
-                    return '\'' + val + '\'';
+                    if(val.toString().indexOf('\'')!=-1){
+                        val=val.toString().replace(/'/ig,'\\\'');
+                    }
+                    return '\'' + val+ '\'';
                 }
             }).join(',') + ')';
         }
@@ -230,7 +236,7 @@ module.exports = {
                         if (result) {
                             setArray.push(`\`${field}\`=${result[1]}`);
                         } else {
-                            setArray.push(`\`${field}\`='${fieldVal}'`);
+                            setArray.push(`\`${field}\`='${fieldVal.replace(/'/g,'\\\'')}'`);
                         }
                     } else if (Object.prototype.toString.call(fieldVal) === `[object Array]`) {
                         //array set方法的处理
@@ -274,6 +280,12 @@ module.exports = {
                                         }).join(',').concat(')')));
                                         break;
                                     }
+                                    case 'not in': {
+                                        whereArray.push('`' + safeKey + '` not in' + '('.concat(current[1].map(function (v, i, arr) {
+                                            return '\''.concat(v).concat('\'');
+                                        }).join(',').concat(')')));
+                                        break;
+                                    }
                                     case 'between': {
                                         whereArray.push(safeKey + ' between \'' + current[1] + '\' and \'' + current[2] + '\'');
                                         break;
@@ -292,6 +304,14 @@ module.exports = {
                                 case 'in': {
                                     if (firstPrm[key][1] && firstPrm[key][1].map) {
                                         whereArray.push(safeKey + ' in' + '('.concat(firstPrm[key][1].map(function (current, index, arr) {
+                                            return '\''.concat(current).concat('\'');
+                                        }).join(',').concat(')')));
+                                    }
+                                    break;
+                                }
+                                case 'not in': {
+                                    if (firstPrm[key][1] && firstPrm[key][1].map) {
+                                        whereArray.push(safeKey + ' not in' + '('.concat(firstPrm[key][1].map(function (current, index, arr) {
                                             return '\''.concat(current).concat('\'');
                                         }).join(',').concat(')')));
                                     }
@@ -332,6 +352,9 @@ module.exports = {
             return this;
         } else if (arguments.length == 1) {
             let arg = arguments[0];
+            if(!arg){
+                return this;
+            }
             if ((typeof arg == 'string') && arg.constructor == String && arg == '') {
                 return this;
             } else if ((typeof arg == 'string') && arg.constructor == String) {
@@ -368,7 +391,7 @@ module.exports = {
         }
         return this;
     },
-    leftJoin: function (tableName) {
+    leftJoin: function (joinCondition) {
         if (typeof joinCondition == 'string' && joinCondition.constructor == String) {
             this._join += ' left join ' + joinCondition;
         } else if (Array.isArray(joinCondition)) {
@@ -382,6 +405,7 @@ module.exports = {
                 }
             }
         }
+        return this;
     },
     innerJoin: function (joinCondition) {
         if (typeof joinCondition == 'string' && joinCondition.constructor == String) {
@@ -399,7 +423,7 @@ module.exports = {
         }
         return this;
     },
-    rightJoin: function (tableName) {
+    rightJoin: function (joinCondition) {
         if (typeof joinCondition == 'string' && joinCondition.constructor == String) {
             this._join += ' right join ' + joinCondition;
         } else if (Array.isArray(joinCondition)) {
@@ -413,6 +437,7 @@ module.exports = {
                 }
             }
         }
+        return this;
     },
     fullJoin: function (tableName) {
         if (typeof joinCondition == 'string' && joinCondition.constructor == String) {

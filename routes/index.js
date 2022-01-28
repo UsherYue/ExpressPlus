@@ -9,7 +9,11 @@
 var router =global.newRouter();
 
 router.get('/abc', function (req, res, next) {
-  
+
+    ///
+    ///
+
+
     res.json('hello,aaa!');
 });
 

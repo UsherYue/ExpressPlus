@@ -4,10 +4,32 @@
  * User: usher.yue
  * Date: 17/11/14
  * Time: 16:20
- * 心怀教育梦－烟台网格软件技术有限公司
  */
 
 let exportObj = new Object();
+
+/**
+ * 从数据库获取配置,或者设置
+ * @param key
+ * @returns {boolean}
+ * @constructor
+ */
+exportObj.c = async (key, value) => {
+    if (value === undefined) {
+        let r = await sqlBuilder.select('*').from('bi_config').where({'`key`': key}).do();
+        if (!isTrueObject(r)) {
+            return false;
+        } else {
+            return r[0]['value'];
+        }
+    } else {
+        if (await exportObj.exists('bi_config', {'`key`': key})) {
+            await exportObj.sets({value: value}, 'bi_config', {'`key`': key});
+        } else {
+            await exportObj.puts('bi_config', {value: value, 'key': key});
+        }
+    }
+}
 
 /**
  * multi insert
@@ -21,7 +43,7 @@ exportObj.puts = async (table, rows) => {
     }
     let r = await sqlBuilder.insertInto(table, rows).do();
     if (Array.isArray(rows)) {
-        return !r ? false : true;
+        return r !== false;
     } else {
         return r === false ? false : r;
     }
@@ -51,8 +73,8 @@ exportObj.exists = async (table, condition) => {
  */
 exportObj.getOne = async (fields, table, condition) => {
     let result = await sqlBuilder.select(fields).from(table).where(condition).limit(1).do();
-    if (false !== result) {
-        return result.firstRow();
+    if (isTrueObject(result)) {
+        return result[0];
     } else {
         return false;
     }
@@ -65,12 +87,16 @@ exportObj.getOne = async (fields, table, condition) => {
  * @param condition
  * @returns {Promise.<*>}
  */
-exportObj.gets = async (fields, table, condition) => {
-    let result = await sqlBuilder.select(fields).from(table).where(condition).do();
-    if (false !== result) {
+exportObj.gets = async (fields, table, condition, order) => {
+    let result = null;
+    if (order)
+        result = await sqlBuilder.select(fields).from(table).where(condition).orderBy(order).do();
+    else
+        result = await sqlBuilder.select(fields).from(table).where(condition).do();
+    if (result) {
         return result;
     } else {
-        return false;
+        return [];
     }
 }
 /**
@@ -83,5 +109,32 @@ exportObj.gets = async (fields, table, condition) => {
 exportObj.sets = async (set, table, condition) => {
     let result = await sqlBuilder.update(table).set(set).where(condition).do();
     return result;
+}
+
+/**
+ * 获取数目
+ * @param table
+ * @param condition
+ * @returns {Promise.<Number>}
+ */
+exportObj.count = async (table, condition) => {
+    let result = await sqlBuilder.select('count(1) as c').from(table).where(condition).do();
+    return !result.length ? 0 : parseInt(result[0]['c']);
+}
+
+/**
+ * 获取数目针对指定字段
+ * @param table
+ * @param condition
+ * @returns {Promise.<Number>}
+ */
+exportObj.countByField = async (table, condition,field='count(1)',alias='c') => {
+    let result = await sqlBuilder.select(`${field} as ${alias}`).from(table).where(condition).do();
+    return !result.length ? 0 : parseInt(result[0]['c']);
+}
+
+exportObj.hasTable = async (tableName) => {
+    let ret = await db.showtable(`show tables like '${tableName}'`);
+    return ret && ret.length;
 }
 module.exports = exportObj;
