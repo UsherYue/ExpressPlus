@@ -83,4 +83,18 @@ router.get('/test2', function (req, res, next) {
      res.send('test');
 });
 
+
+router.get('/testjwt',async (req,res,next)=>{
+    let token=jwt.sign({a:1},'1d');
+    // jwt.echo();
+    res.send(token);
+
+});
+
+router.get('/verifyjwt',async(req,res,next)=>{
+    const token=req.query.token||'';
+    let data=await jwt.verify(token);
+    res.send(data);
+});
+
 module.exports = router;

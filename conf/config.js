@@ -52,6 +52,9 @@ module.exports = {
 
         }
     },
+    jwt:{
+        secret:'test secret',
+    },
     //模板引擎配置
     templateConfig:{
         viewsPath:'views',
