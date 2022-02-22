@@ -14,17 +14,17 @@ var co = require('co');
 //, { type: global.db.QueryTypes.SELECT}
 router.get('/test1', function (req, res, next) {
     // co(function *() {
-    //   yield global.db.query('select * from test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT}).then(function (result) {
+    //   yield global.db.query('select * from unit_test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT}).then(function (result) {
     //       console.log(result);
     //    });
     // });
     // co(function *() {
-    //     var promise=global.db.query('select * from test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT});
+    //     var promise=global.db.query('select * from unit_test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT});
     //     console.log(promise instanceof  Promise);
-    //   //  var result=yield global.db.query('select * from test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT});
+    //   //  var result=yield global.db.query('select * from unit_test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT});
     //    // console.log(result);
     // });
-    // global.db.query('select * from test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT}).then(function (result) {
+    // global.db.query('select * from unit_test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT}).then(function (result) {
     //     res.json(result);
     // });
     //
@@ -52,14 +52,14 @@ router.get('/test1', function (req, res, next) {
       // result=sqlBuilder.select('count(a) as id','count(b) as b').from('abc as abcd ').where({a:1}).innerJoin('c').on('a.id=c.id').sql();
       // console.log(result);
 
-    // global.db.getPages(" select * from test ", 10, 10, true).then(function (data) {
+    // global.db.getPages(" select * from unit_test ", 10, 10, true).then(function (data) {
     //     res.json(data);
     // }).catch(function (err) {
     //     res.json(err);
     // });
     //
     //  co(function *() {
-    //     var data=yield global.db.getPages(" select * from test group by id having id%2=0 ", 10, 10, true);
+    //     var data=yield global.db.getPages(" select * from unit_test group by id having id%2=0 ", 10, 10, true);
     //     res.send(data);
     //  });
 

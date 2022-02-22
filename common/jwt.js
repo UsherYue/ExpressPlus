@@ -52,7 +52,7 @@ module.exports = class {
     }
 
     /**
-     * test
+     * unit_test
      */
     static echo() {
         console.log('echo!');

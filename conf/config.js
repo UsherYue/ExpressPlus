@@ -41,21 +41,20 @@ module.exports = {
     staticConfig:[
         {
             router:'/',
-            path:'public',
+            path:'static_server_root',
             index:'index.html'
         }
     ],
     //session配置 session共享需要 redis mysql 集群支持
     sessionConfig:{
         driver:'memory',
-        options:{
-
-        }
+        options:{}
     },
+    ///vue mvvm jwt
     jwt:{
-        secret:'test secret',
+        secret:'unit_test secret',
     },
-    //模板引擎配置
+    //mvc模板引擎配置
     templateConfig:{
         viewsPath:'views',
         useCache:false,

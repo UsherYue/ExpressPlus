@@ -30,7 +30,7 @@
     "node-uuid": "^1.4.8",
     "qrcode": "^0.8.0",
     "redis": "^2.6.3",
-    "request": "^2.79.0",
+    "request": "^2.85.0",
     "sequelize": "^3.29.0",
     "serve-favicon": "^2.4.3",
     "session-file-store": "^1.0.0",
