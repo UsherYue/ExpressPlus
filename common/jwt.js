@@ -9,7 +9,7 @@
 const jwt = require("jsonwebtoken"); // 引入jwt
 
 //jwt 密钥
-const jwtSecret = config.jwt ? (config.jwt.secret ? config.jwt.secret : '') : '';
+const jwtSecret = global.config?(config.jwt ? (config.jwt.secret ? config.jwt.secret : '') : ''):'';
 
 
 module.exports = class {
