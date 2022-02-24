@@ -50,6 +50,9 @@ module.exports = {
         driver:'memory',
         options:{}
     },
+    middleWare:[
+        // 'jwt'
+    ],
     ///vue mvvm jwt
     jwt:{
         secret:'unit_test secret',

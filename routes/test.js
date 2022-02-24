@@ -97,4 +97,9 @@ router.get('/verifyjwt',async(req,res,next)=>{
     res.send(data);
 });
 
+router.get('/t',(req,res,_)=>{
+    console.log(req.get('AuthorizationReceive'));
+     res.send('ok!');
+});
+
 module.exports = router;

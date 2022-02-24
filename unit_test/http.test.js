@@ -20,6 +20,11 @@ describe('测试http工具',function () {
             done();
         });
     });
+    before(()=>console.info("在本区块的所有测试用例之前执行"))
+    after(()=>console.info("在本区块的所有测试用例之后执行"))
+    beforeEach(()=>console.info("在本区块的每个测试用例之前执行"))
+    afterEach(()=>console.info("在本区块的每个测试用例之后执行"))
+
     it('http Post测试',function (done) {
         co(function *() {
             var data = yield http.get('https://baidu.com',{},false)
