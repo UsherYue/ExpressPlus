@@ -13,8 +13,8 @@ Node Version:8.5.0+
 │   ├── modules                // 模型  
 │   ├── routers               //  路由   
 │   └── views                 // 模板引擎    
-├── core                      // 框架代码 
-├── test                      //单元测试  
+├── core                      // 框架代码   
+├── test                      //单元测试    
 ├── upload                    //文件上传目录    
 ├── .gitignore          
 ├── package.json  
