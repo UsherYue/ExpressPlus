@@ -27,21 +27,6 @@ router.get('/filter2',async(req,res,next)=>{
 });
 
 
-//@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
-//@Filter(LoginCheck1,AccessCheck1)
-//@Filter(LoginCheck2,AccessCheck2)
-router.post('/sS/filter3',async(req,res,next)=>{
-
-    res.send('test');
-});
-
-
-//@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
-//@Filter(LoginCheck,AccessCheck)
-router.head('/filter4',async(req,res,next)=>{
-
-    res.send('test');
-});
 
 
 module.exports=router;

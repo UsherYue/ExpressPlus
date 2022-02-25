@@ -190,6 +190,23 @@ delete process.env["DEBUG_FD"];
         return annotationMap;
     },
     _initAnnotation: function () {
+        //对apidock注解进行处理
+        app.use('/apidoc',async(req,res,next)=>{
+            let apiDoc={};
+            for(let k in annotationMap){
+                 for(let v of annotationMap[k]){
+                      if(v.indexOf('@Document')==0){
+                          let docContent=v.split(':')[1];
+                          if(!apiDoc[k]){
+                              apiDoc[k]=[...docContent.split(',')];
+                          }else{
+                              apiDoc[k].push(...docContent.split(','));
+                          }
+                      }
+                 }
+            }
+            res.send(apiDoc);
+        });
         //对注解进行拦截
         app.use(async (req, res, next) => {
             let path = req.path;
