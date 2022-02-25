@@ -95,6 +95,7 @@ delete process.env["DEBUG_FD"];
         this._initTemplate();
         this._initMiddleWare();
         this._initCommonFunc();
+        this._initAnnotation();
         this._initI18N(__dirname + "/lang", '.json');
         this._initApp(__dirname + "/common/");
         this._initRouter(__dirname + '/routes/');
@@ -104,7 +105,7 @@ delete process.env["DEBUG_FD"];
     _initRouter: function (path) {
         let $this = this;
         let files = fs.readdirSync(path);
-        files.forEach(function (file, index) {
+        files.forEach(async function (file, index) {
             let stat = fs.statSync(path + file)
             let routeFileName = file.replace(/(.*\/)*([^.]+).*/ig, "$2");
             let regRxp = /.+\/routes\/(.+)$/ig;
@@ -116,12 +117,108 @@ delete process.env["DEBUG_FD"];
                 routePath = (r == null) ? '' : r[1];
                 //load route mapping
                 let routeUriMapping = $this._loadNs(routePath);
+                //放在前面否则存在服务器启动无法注册路由
                 routeUriMapping.forEach(function (value, index) {
                     app.use(value, subModule);
-                })
+                });
+                //////////////////注解拦截////////////////////////
+                let routerFile = path + routeFileName + '.js';
+                await $this._analysisAnnotationFile(routerFile, async (tmpAnnotationMap) => {
+                    routeUriMapping.forEach(function (value, index) {
+                        if (!global.annotationMap) {
+                            global.annotationMap = {};
+                        }
+                        for (let k in tmpAnnotationMap) {
+                            let keyArr = k.split(':');
+                            let routerKey = `${keyArr[0]}:${value == '/' ? '' : value}${keyArr[1]}`;
+                            global.annotationMap[routerKey] = tmpAnnotationMap[k];
+                        }
+                    });
+                });
+                ////////////////////////////注解拦截///////////////////////////////////
             } else if (stat.isDirectory()) {
                 $this._initRouter(path + routeFileName + "/")
             }
+        });
+    },
+    _analysisAnnotationFile: async function (routerFile, fn) {
+        const fs = require('fs');
+        const readline = require('readline');
+        //create read  stream
+        const fileStream = fs.createReadStream(routerFile);
+        const rl = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
+        });
+        let codeLines = [];
+        for await (let line of rl) {
+            if (line.trim() != '' &&
+                line.trimLeft().indexOf('/*') != 0 &&
+                line.trimLeft().indexOf('*') != 0 &&
+                line.trimLeft().indexOf('*/') != 0) {
+                codeLines.push(line)
+            }
+        }
+        let annotationGroup = [];
+        let annotationMap = {};
+        var beginIndex = 0;
+        for (let line of codeLines) {
+            line = line.trimLeft();
+            //处理注解
+            if (line.indexOf('//@') == 0) {
+                var reg = /(Document|Filter)\((.+)\)/ig;
+                let result = reg.exec(line);
+                if (result) {
+                    let annotation = `@${result[1]}:${result[2]}`;
+                    if (!annotationGroup[beginIndex]) {
+                        annotationGroup[beginIndex] = [annotation];
+                    } else {
+                        annotationGroup[beginIndex].push(annotation);
+                    }
+                }
+            }
+            //处理路由
+            var reg = /^(\w+)\.(get|post|delete|head)\(['"]([\/\w]+)['"]/i;
+            if (annotationGroup[beginIndex] && line.indexOf('router.') == 0) {
+                let ret = reg[Symbol.match](line);
+                let router = `${ret[2].toLowerCase()}:${ret[3]}`;
+                annotationMap[router] = annotationGroup[beginIndex];
+                ++beginIndex;
+            }
+        }
+        await fn(annotationMap);
+        return annotationMap;
+    },
+    _initAnnotation: function () {
+        //对注解进行拦截
+        app.use(async (req, res, next) => {
+            let path = req.path;
+            let method = req.method.toLowerCase();
+            let key = `${method}:${path}`
+            if (annotationMap[key]) {
+                for (let anno of annotationMap[key]) {
+                    let annos = anno.split(':');
+                    let annoType = annos[0];
+                    let annoPrms = annos[1].split(',');
+                    if (annoType.indexOf('@Filter') == 0) {
+                        for (let anno of annoPrms) {
+                            //执行注解路由
+                            let annoFunc = annotations[anno];
+                            if (typeof annoFunc == 'function') {
+                                if (!await annoFunc(req, res)) {
+                                    colorlog.warning('Warning',`注解拦截:${key}:${anno}`);
+                                    return;
+                                }else{
+                                    colorlog.success('DONE',`注解通过:${key}:${anno}`);
+                                }
+                            }else{
+                                colorlog.warning('Error',`未定义路由注解:${key}:${anno}`);
+                            }
+                        }
+                    }
+                }
+            }
+            next();
         });
     },
     _initI18N: function (i18nPath, ext) {
@@ -178,7 +275,7 @@ delete process.env["DEBUG_FD"];
         if (!this.modelRoot) {
             this.modelRoot = path;
         }
-        if (typeof(global.M) == 'undefined') {
+        if (typeof (global.M) == 'undefined') {
             global.M = model => !global.models[model] ? null : global.models[model];
         }
         let fs = require('fs');
@@ -224,7 +321,7 @@ delete process.env["DEBUG_FD"];
         }
     },
     _initRedis: function () {
-        if (!global.config||!global.config.redisConfig || !global.config.redisConfig.host) {
+        if (!global.config || !global.config.redisConfig || !global.config.redisConfig.host) {
             return;
         }
         let redisServerIp = global.config.redisConfig.host;
@@ -272,10 +369,10 @@ delete process.env["DEBUG_FD"];
         let nsConfig = global.config.nsConfig;
         for (var key in nsConfig) {
             let nsItem = nsConfig[key];
-            switch ((typeof(nsItem)).toLowerCase()) {
+            switch ((typeof (nsItem)).toLowerCase()) {
                 case 'string': {
                     if (this.ns[nsItem] != undefined) {
-                        let itemType = (typeof($this.ns[nsItem])).toLowerCase();
+                        let itemType = (typeof ($this.ns[nsItem])).toLowerCase();
                         if (itemType == 'string') {
                             this.ns[nsItem] = [$this.ns[nsItem], key]
                         } else if (itemType == 'object') {
@@ -301,11 +398,11 @@ delete process.env["DEBUG_FD"];
     },
     _initDb: function ($this) {
         let Sequelize = require('sequelize');
-        if (!global.config||!global.config.dbConfig||!global.config.dbConfig.dbtype) {
-            return ;
+        if (!global.config || !global.config.dbConfig || !global.config.dbConfig.dbtype) {
+            return;
         }
-        if (!global.config||!global.config.dbConfig||!global.config.dbConfig.dbname) {
-            return ;
+        if (!global.config || !global.config.dbConfig || !global.config.dbConfig.dbname) {
+            return;
         }
         Sequelize.prototype.select = function (sql) {
             return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
@@ -444,8 +541,7 @@ delete process.env["DEBUG_FD"];
             return router;
         }
         //拦截器待实现
-        global.newFilter=function(){
-
+        global.newFilter = function () {
 
 
         };
@@ -480,7 +576,7 @@ delete process.env["DEBUG_FD"];
         global.co = require('co');
     },
     _initCommonFunc: function () {
-        if (typeof(Object.values) !== 'function') {
+        if (typeof (Object.values) !== 'function') {
             Object.values = function (obj) {
                 var values = [];
                 for (var key in obj) {
@@ -514,8 +610,7 @@ delete process.env["DEBUG_FD"];
                             result = result.replace(reg, args[key]);
                         }
                     }
-                }
-                else {
+                } else {
                     for (var i = 0; i < arguments.length; i++) {
                         if (arguments[i] != undefined) {
                             var reg = new RegExp("({)" + i + "(})", "g");
@@ -526,11 +621,11 @@ delete process.env["DEBUG_FD"];
             }
             return result;
         }
-        var oldJsonParser=JSON.parse;
-        JSON.parse=(jsonStr)=>{
-            try{
+        var oldJsonParser = JSON.parse;
+        JSON.parse = (jsonStr) => {
+            try {
                 return oldJsonParser(jsonStr);
-            }catch(ex){
+            } catch (ex) {
                 return null;
             }
         };
@@ -677,9 +772,9 @@ delete process.env["DEBUG_FD"];
          * @param val
          * @returns {boolean}
          */
-        Array.prototype.inArray=function(val){
-            for(let v of this){
-                if(v==val){
+        Array.prototype.inArray = function (val) {
+            for (let v of this) {
+                if (v == val) {
                     return true;
                 }
             }
@@ -703,17 +798,17 @@ delete process.env["DEBUG_FD"];
             return t;
         };
         global.isTrueObject = obj => Array.isArray(obj) ? Boolean(obj.length) : Boolean(obj);
-        global.isFalseObject= obj => (!(Array.isArray(obj) ? Boolean(obj.length) : Boolean(obj)));
+        global.isFalseObject = obj => (!(Array.isArray(obj) ? Boolean(obj.length) : Boolean(obj)));
         global.t = (obj) => Object.prototype.toString.call(obj);
         global.format = global.sprintf = require('util').format;
-        global.filterValue = (val, defaultvalue) => (typeof(val) == 'undefined' || !val) ? defaultvalue : val;
+        global.filterValue = (val, defaultvalue) => (typeof (val) == 'undefined' || !val) ? defaultvalue : val;
         global.return = (ret, data, msg) => ({ret: ret, data: data, msg: msg})
         global.error = (data, msg) => ({status: 0, data: data, info: msg});
         global.success = (data, msg) => ({status: 1, data: data, info: msg});
     },
     _initMiddleWare: function () {
-        if(config.middleWare&&config.middleWare.length){
-            for(let middleWare of config.middleWare){
+        if (config.middleWare && config.middleWare.length) {
+            for (let middleWare of config.middleWare) {
                 app.use(require(`./middleware/${middleWare}`));
             }
         }

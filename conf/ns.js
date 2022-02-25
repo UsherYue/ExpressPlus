@@ -6,11 +6,12 @@
  * Time: 18:45
  */
 
-//路由映射
+//路由映射名字空间
 module.exports = {
     '/index/v1':[
         'index',
-        'test'
+        'test',
+        'filtertest'
     ],
     '/test':'test',
     '/aaa/v':'test'
