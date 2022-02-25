@@ -84,7 +84,6 @@ router.get('/test2', function (req, res, next) {
 });
 
 
-//@Filter(Test)
 router.get('/testjwt',async (req,res,next)=>{
     let token=jwt.sign({a:1},'1d');
     // jwt.echo();

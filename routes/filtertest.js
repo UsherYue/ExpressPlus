@@ -7,12 +7,12 @@
  * 乘风破浪－注解扩展
  */
 
-let router=newRouter();
+//可以通过router直接增加过滤器
+let router=newRouter(filters.LoginCheck);
 
 
 
 //@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
-//@Filter(LoginCheck,AccessCheck1)
 router.get('/filter1',async(req,res,next)=>{
 
     res.send('test');

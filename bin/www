@@ -23,7 +23,7 @@ var cluster = require('cluster');
 
 const scriptName = path.parse(__filename).name;
 const appRoot = path.parse(path.parse(path.parse(__filename).dir).dir).name;
-if (cluster.isMaster) {
+if (0&&cluster.isMaster) {
     var numCPUs = require('os').cpus().length;
     colorlog.info('Success',"Run ExpressPlus Master Process......");
     // Fork workers.

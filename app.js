@@ -132,7 +132,14 @@ delete process.env["DEBUG_FD"];
                             let keyArr = k.split(':');
                             let routerKey = `${keyArr[0]}:${value == '/' ? '' : value}${keyArr[1]}`;
                             global.annotationMap[routerKey] = tmpAnnotationMap[k];
+                            if(subModule.filters&&subModule.filters.length){
+                                 let filters=subModule.filters.map((v,idx,arr)=>{
+                                     return v.name;
+                                 });
+                                global.annotationMap[routerKey].push(`@Filter:${filters.join(',')}`);
+                            }
                         }
+                        console.log( global.annotationMap)
                     });
                 });
                 ////////////////////////////注解拦截///////////////////////////////////
@@ -220,7 +227,7 @@ delete process.env["DEBUG_FD"];
                     if (annoType.indexOf('@Filter') == 0) {
                         for (let anno of annoPrms) {
                             //执行注解路由
-                            let annoFunc = annotations[anno];
+                            let annoFunc = filters[anno];
                             if (typeof annoFunc == 'function') {
                                 if (!await annoFunc(req, res)) {
                                     colorlog.warning('Warning',`注解拦截:${key}:${anno}`);
@@ -549,19 +556,17 @@ delete process.env["DEBUG_FD"];
     },
     _initApp: function (commonPath) {
         global.express = express;
-        global.newRouter = function () {
+        //路由增加过滤器
+        global.newRouter = function (...filters) {
             let router = express.Router();
+            //手动增加路由注解
+            router.filters=filters;
             router.uploadFile = (mapUri, savePath, fileKey, callback) => {
                 var uploadHandler = multer({dest: savePath});
                 router.post(mapUri, uploadHandler.single(fileKey), callback);
             };
             return router;
         }
-        //拦截器待实现
-        global.newFilter = function () {
-
-
-        };
         let files = fs.readdirSync(commonPath);
         files.forEach(function logArrayElements(element, index, array) {
                 let moduleName = element.replace(/(.*)\.js/ig, "$1");
