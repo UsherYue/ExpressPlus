@@ -179,8 +179,8 @@ delete process.env["DEBUG_FD"];
             }
             //处理路由
             var reg = /^(\w+)\.(get|post|delete|head)\(['"]([\/\w]+)['"]/i;
-            if (annotationGroup[beginIndex] && line.indexOf('router.') == 0) {
-                let ret = reg[Symbol.match](line);
+            let ret = reg[Symbol.match](line);
+            if (annotationGroup[beginIndex] &&ret/*&& line.indexOf('router.') == 0*/) {
                 let router = `${ret[2].toLowerCase()}:${ret[3]}`;
                 annotationMap[router] = annotationGroup[beginIndex];
                 ++beginIndex;
