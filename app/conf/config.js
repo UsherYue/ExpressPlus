@@ -55,7 +55,7 @@ module.exports = {
     ],
     ///vue mvvm jwt
     jwt:{
-        secret:'unit_test secret',
+        secret:'test secret',
     },
     //mvc模板引擎配置
     templateConfig:{

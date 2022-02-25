@@ -8,7 +8,7 @@
  */
 
 let assert = require('chai').assert;
-let jwt=require('../common/jwt');
+let jwt=require('../app/common/jwt');
 const secret="aaddsdsd";
 
 describe('jwt测试', async function () {

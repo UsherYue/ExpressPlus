@@ -124,7 +124,7 @@ module.exports = {
                 }
                 // sha1算法
                 var sha1 = function (content) {
-                    var crypto = require('crypto');
+                    var crypto = require('app/common/crypto');
                     var sha1 = crypto.createHash('sha1');
                     sha1.update(content);
                     return sha1.digest();

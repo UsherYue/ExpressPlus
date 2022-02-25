@@ -7,7 +7,7 @@
  */
 
 let assert = require('chai').assert;
-let crypto=require('../common/crypto');
+let crypto=require('../app/common/crypto');
 
 describe('加密测试', function () {
     it('md5测试', done => {

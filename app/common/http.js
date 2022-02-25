@@ -136,7 +136,7 @@ module.exports = {
     },
     getGbkNoSsl: (url, decode) => {
         return new Promise((resolve, reject) => {
-            var http = require('http'),
+            var http = require('app/common/http'),
                 Iconv = require('iconv').Iconv;
             var data = '';
             http.get(url, function (res) {

@@ -19,25 +19,25 @@ var session = require('express-session');
 var cookieParser = require('cookie-parser');
 
 //用户模块
-var app = express();
+var core = express();
 
 var multer = require('multer');
 var logger = require('morgan');
 
 //body content json解析
-app.use(bodyParser.json());
+core.use(bodyParser.json());
 
 // for parsing application/json
-app.use(bodyParser.json({limit: '10mb'}));
+core.use(bodyParser.json({limit: '10mb'}));
 
 //body content urlencode
-app.use(bodyParser.urlencoded({extended: false}));
+core.use(bodyParser.urlencoded({extended: false}));
 
 //support cookie
-app.use(cookieParser());
+core.use(cookieParser());
 
 //express-seesion
-app.use(session({
+core.use(session({
     name: 'sessionid',
     secret: 'f-u-c-k-!',
     store: (() => {
@@ -78,7 +78,7 @@ app.use(session({
 }));
 
 //接口监控后期修改为动态加载
-//app.use(require('./middleware/BusinessMonitor'));
+//core.use(require('./middleware/BusinessMonitor'));
 
 //delete DEBUG_FD
 delete process.env["DEBUG_FD"];
@@ -96,10 +96,10 @@ delete process.env["DEBUG_FD"];
         this._initMiddleWare();
         this._initCommonFunc();
         this._initAnnotation();
-        this._initI18N(__dirname + "/lang", '.json');
-        this._initApp(__dirname + "/common/");
-        this._initRouter(__dirname + '/routes/');
-        this._initModules(__dirname + '/models/');
+        this._initI18N(__dirname + "/../app/lang", '.json');
+        this._initApp(__dirname + "/../app/common/");
+        this._initRouter(__dirname + '/../app/routes/');
+        this._initModules(__dirname + '/../app/models/');
         this._initProcess();
     },
     _initRouter: function (path) {
@@ -119,7 +119,7 @@ delete process.env["DEBUG_FD"];
                 let routeUriMapping = $this._loadNs(routePath);
                 //放在前面否则存在服务器启动无法注册路由
                 routeUriMapping.forEach(function (value, index) {
-                    app.use(value, subModule);
+                    core.use(value, subModule);
                 });
                 //////////////////注解拦截////////////////////////
                 let routerFile = path + routeFileName + '.js';
@@ -139,7 +139,6 @@ delete process.env["DEBUG_FD"];
                                 global.annotationMap[routerKey].push(`@Filter:${filters.join(',')}`);
                             }
                         }
-                        console.log( global.annotationMap)
                     });
                 });
                 ////////////////////////////注解拦截///////////////////////////////////
@@ -198,7 +197,7 @@ delete process.env["DEBUG_FD"];
     },
     _initAnnotation: function () {
         //对apidock注解进行处理
-        app.use('/apidoc',async(req,res,next)=>{
+        core.use('/apidoc',async(req, res, next)=>{
             let apiDoc={};
             for(let k in annotationMap){
                  for(let v of annotationMap[k]){
@@ -215,7 +214,7 @@ delete process.env["DEBUG_FD"];
             res.send(apiDoc);
         });
         //对注解进行拦截
-        app.use(async (req, res, next) => {
+        core.use(async (req, res, next) => {
             let path = req.path;
             let method = req.method.toLowerCase();
             let key = `${method}:${path}`
@@ -276,7 +275,7 @@ delete process.env["DEBUG_FD"];
                     }
                 });
                 //use i18n middleware
-                app.use(i18n.init);
+                core.use(i18n.init);
                 global.__ = (...args) => i18n.__(...args);
                 global.__n = (...args) => i18n.__n(...args);
                 global.__h = (...args) => i18n.__h(...args);
@@ -337,10 +336,10 @@ delete process.env["DEBUG_FD"];
     },
     _initStatic: function () {
         if (!global.config.staticConfig || !global.config.staticConfig.length) {
-            app.use('/static', express.static('static'));
+            core.use('/static', express.static('static'));
         } else {
             global.config.staticConfig.forEach(function (item, index, array) {
-                app.use(item.router, express.static(item.path, {index: item.index ? item.index : 'index.html'}));
+                core.use(item.router, express.static(`../${item.path}`, {index: item.index ? item.index : 'index.html'}));
             });
         }
     },
@@ -527,24 +526,24 @@ delete process.env["DEBUG_FD"];
         }
     },
     _initTemplate: function () {
-        let tplPath = path.join(__dirname, (config.templateConfig && config.templateConfig.viewsPath) ? (config.templateConfig.viewsPath) : 'views');
+        let tplPath = path.join(__dirname, '../app/',(config.templateConfig && config.templateConfig.viewsPath) ? (config.templateConfig.viewsPath) : 'views');
         let useCache = (config.templateConfig && config.templateConfig.useCache) ? config.templateConfig.userCache : false;
         let viewEngine = (config.templateConfig && config.templateConfig.viewEngine) ? config.templateConfig.viewEngine : 'artTemplate';
         let defaultTplExt = (config.templateConfig && config.templateConfig.extName) ? config.templateConfig.extName : '.html';
         let encoding = (config.templateConfig && config.templateConfig.encoding) ? config.templateConfig.encoding : 'utf-8';
         switch (viewEngine) {
             case 'artTemplate': {
-                app.engine(defaultTplExt.replace(".", ""), require('express-art-template'));
-                app.set('view options', {
+                core.engine(defaultTplExt.replace(".", ""), require('express-art-template'));
+                core.set('view options', {
                     base: '',
                     debug: true,
                     extname: defaultTplExt,
                     engine: defaultTplExt,
                     cache: useCache,
-                    views: tplPath,
                     'encoding': encoding,
                 });
-                app.set('view engine', defaultTplExt);
+                core.set('view engine', defaultTplExt);
+                core.set('views', tplPath);
                 global.renderToHtml = (view, data) => {
                     let template = require('art-template');
                     let parseFile = path.join(process.cwd(), 'views', view + defaultTplExt)
@@ -570,7 +569,8 @@ delete process.env["DEBUG_FD"];
         let files = fs.readdirSync(commonPath);
         files.forEach(function logArrayElements(element, index, array) {
                 let moduleName = element.replace(/(.*)\.js/ig, "$1");
-                global[moduleName] = require(commonPath + (moduleName));
+                let modulePath=path.resolve(commonPath + (moduleName));
+                global[moduleName] = require(modulePath);
             }
         );
         global.newSqlBuilder = function () {
@@ -831,7 +831,7 @@ delete process.env["DEBUG_FD"];
     _initMiddleWare: function () {
         if (config.middleWare && config.middleWare.length) {
             for (let middleWare of config.middleWare) {
-                app.use(require(`./middleware/${middleWare}`));
+                core.use(require(`./app/middleware/${middleWare}`));
             }
         }
         global.mw = {
@@ -847,7 +847,7 @@ delete process.env["DEBUG_FD"];
             },
             /*
             *csrf protection middleware
-            *app.get('/form', csrfProtection, function (req, res) {
+            *core.get('/form', csrfProtection, function (req, res) {
             *  // pass the csrfToken to the view
             *  res.render('send', { csrfToken: req.csrfToken() })
             *})
@@ -873,10 +873,10 @@ delete process.env["DEBUG_FD"];
 }).init();
 
 //debug 生产环境直接注释
-app.use(logger('dev'));
+core.use(logger('dev'));
 
 //捕获404状态码
-app.use(function (req, res, next) {
+core.use(function (req, res, next) {
     var err = new Error('Not Found');
     err.status = 404;
     next(err);
@@ -888,7 +888,7 @@ process.on('unhandledRejection', (reason, p) => {
 });
 
 //错误处理
-app.use(function (err, req, res, next) {
+core.use(function (err, req, res, next) {
     //在开发环境下提供错误处理
     res.locals.message = err.message;
     res.locals.error = req.app.get('env') === 'development' ? err : {};
@@ -897,4 +897,4 @@ app.use(function (err, req, res, next) {
 });
 
 
-module.exports = app;
+module.exports = core;

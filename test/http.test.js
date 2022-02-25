@@ -7,7 +7,7 @@
  */
 
 let assert = require('assert');
-let http=require('../common/http');
+let http=require('../app/common/http');
 let co=require('co');
 //  expect('2').to.be.a('string');
 //  var expect = require('chai').expect;

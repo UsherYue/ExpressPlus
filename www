@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/core/env node
 
 /**
  * PHPProject
@@ -11,11 +11,11 @@
 'use strict';
 
 //global conf
-global.config = require('../conf/config');
+global.config = require('./app/conf/config');
 //routes conf
-global.config.nsConfig = require('../conf/ns');
+global.config.nsConfig = require('./app/conf/ns');
 
-var app = require('../app');
+var app = require('./core/core');
 var debug = require('debug')('express:server');
 var http = require('http');
 var path = require('path');
@@ -23,7 +23,7 @@ var cluster = require('cluster');
 
 const scriptName = path.parse(__filename).name;
 const appRoot = path.parse(path.parse(path.parse(__filename).dir).dir).name;
-if (0&&cluster.isMaster) {
+if (cluster.isMaster) {
     var numCPUs = require('os').cpus().length;
     colorlog.info('Success',"Run ExpressPlus Master Process......");
     // Fork workers.

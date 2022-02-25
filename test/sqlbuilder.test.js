@@ -9,7 +9,7 @@ let assert = require('chai').assert;
 //  expect('2').to.be.a('string');
 //  var expect = require('chai').expect;
 //  expect('2').to.be.a('string');
-let sqlBuilder = require('../common/sqlbuilder');
+let sqlBuilder = require('../app/common/sqlbuilder');
 describe('测试sql工具', function () {
     it('sql where测试', done => {
         let $where = [];
