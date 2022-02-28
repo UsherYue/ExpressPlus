@@ -10,6 +10,10 @@
  */
 'use strict';
 
+var http = require('http');
+var path = require('path');
+var cluster = require('cluster');
+
 ///////////进程启动控制状态/////////////////
 /**
  * true开启集群多核
@@ -17,38 +21,55 @@
  * @type {boolean}
  */
 const USE_CLUSTER  =  true ;
-
+/**
+ * app path
+ * @type {string}
+ */
+const APP_PATH = './app/';
+/**
+ * 名字空间配置文件
+ * @type {string}
+ */
+const NS_CONFIG = `${APP_PATH}conf/ns`;
+/**
+ * 应用全局配置文件
+ * @type {string}
+ */
+const APP_CONFIG = `${APP_PATH}conf/config`;
+/**
+ * core入口禁止修改
+ * @type {string}
+ */
+const  CORE_PATH= './core/core';
+/**
+ * process name
+ * @type {string}
+ */
+const  PROCESS_NAME='ExpressPlus';
 //////////////////////////////////////////
-//global conf
-global.config = require('./app/conf/config');
-//routes conf
-global.config.nsConfig = require('./app/conf/ns');
+global.config = require(APP_CONFIG);
+global.config.nsConfig = require(NS_CONFIG);
+var app = require(CORE_PATH);
 
-var app = require('./core/core');
-var debug = require('debug')('debugserver');
-var http = require('http');
-var path = require('path');
-var cluster = require('cluster');
-
-const scriptName = path.parse(__filename).name;
-const appRoot = path.parse(path.parse(path.parse(__filename).dir).dir).name;
-if (USE_CLUSTER&&cluster.isMaster) {
-    var numCPUs = require('os').cpus().length;
-    colorlog.info('Success',"Run ExpressPlus Master Process......");
+//run service
+if (cluster.isMaster) {
+    var workersNum = 1;
+    colorlog.info('Master',"Run ExpressPlus Master Process ,PID:"+process.pid);
     // Fork workers.
-    for (var i = 0; i < numCPUs; i++) {
+    if(USE_CLUSTER){
+        workersNum=require('os').cpus().length
+    }
+    for (let i = 0; i < workersNum; i++) {
         cluster.fork();
     }
     cluster.on('listening', function (worker, address) {
-       // console.log('Run Worker ' + worker.process.pid + ', Port:' + address.port);
-        colorlog.info('Run Worker ID:',worker.process.pid + ',Listen Port:' + address.port);
+        colorlog.info('Worker','PID:'+worker.process.pid+',Listen Port:' + address.port);
     });
     cluster.on('exit', function (worker, code, signal) {
         colorlog.warning('Error','Worker ' + worker.process.pid + ' Exited');
         cluster.fork();
     });
-    process.title = `${appRoot} Master Manager Process `;
-
+    process.title = `${PROCESS_NAME} Master  Process `;
 } else {
     //server port
     var port = normalizePort(process.env.PORT || global.config.httpConfig.port);
@@ -57,7 +78,9 @@ if (USE_CLUSTER&&cluster.isMaster) {
     server.listen(port);
     server.on('error', onError);
     server.on('listening', onListening);
-    process.title = `${appRoot} Worker Process ${scriptName}`;
+    //script file
+    const scriptName = path.parse(__filename).name;
+    process.title = `${PROCESS_NAME} Worker  Process ${scriptName}`;
 }
 
 /**
@@ -112,5 +135,6 @@ function onListening() {
     var bind = typeof addr === 'string'
         ? 'pipe ' + addr
         : 'port ' + addr.port;
+    var debug = require('debug')('debugserver');
     debug('Express Listening on ' + bind);
 }
