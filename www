@@ -10,20 +10,29 @@
  */
 'use strict';
 
+///////////进程启动控制状态/////////////////
+/**
+ * true开启集群多核
+ * false 启动单核用于开发
+ * @type {boolean}
+ */
+const USE_CLUSTER  =  true ;
+
+//////////////////////////////////////////
 //global conf
 global.config = require('./app/conf/config');
 //routes conf
 global.config.nsConfig = require('./app/conf/ns');
 
 var app = require('./core/core');
-var debug = require('debug')('express:server');
+var debug = require('debug')('debugserver');
 var http = require('http');
 var path = require('path');
 var cluster = require('cluster');
 
 const scriptName = path.parse(__filename).name;
 const appRoot = path.parse(path.parse(path.parse(__filename).dir).dir).name;
-if (cluster.isMaster) {
+if (USE_CLUSTER&&cluster.isMaster) {
     var numCPUs = require('os').cpus().length;
     colorlog.info('Success',"Run ExpressPlus Master Process......");
     // Fork workers.

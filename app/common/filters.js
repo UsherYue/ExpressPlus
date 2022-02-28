@@ -19,7 +19,8 @@ module.exports=new class{
      */
     async LoginCheck(req,res){
 
-        //res.send('未登录请登录!')
+       // res.send('未登录请登录!')
+       // res.redirect('https://k12.12xue.com');
         return true;
     }
 
@@ -39,8 +40,8 @@ module.exports=new class{
      */
     async AccessCheck(req,res){
 
-       // res.send('身份授权未通过 ');
-        return true;
+        res.send('身份授权未通过 ');
+        return false;
     }
 
 };

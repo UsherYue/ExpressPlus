@@ -8,11 +8,12 @@
  */
 
 //可以通过router直接增加过滤器
-let router=newRouter(filters.LoginCheck);
+let router=newRouter();
 
 
 
 //@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
+//@Filter(LoginCheck,AccessCheck)
 router.get('/filter1',async(req,res,next)=>{
 
     res.send('test');
@@ -20,8 +21,15 @@ router.get('/filter1',async(req,res,next)=>{
 
 
 //@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
-//@Filter(LoginCheck)
 router.get('/filter2',async(req,res,next)=>{
+
+    res.send('test');
+});
+
+
+
+//@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
+router.get('/filter3',async(req,res,next)=>{
 
     res.send('test');
 });

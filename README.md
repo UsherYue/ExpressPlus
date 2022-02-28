@@ -26,7 +26,9 @@ Node Version:8.5.0+
   npm install    //安装依赖
   npm start      //运行框架
 ```
-
+##模板引擎   
+art-template   https://ejs.bootcss.com/#docs  
+EJS   https://ejs.bootcss.com/#docs  
 
 ##ExpressPluss封装思想 
 
