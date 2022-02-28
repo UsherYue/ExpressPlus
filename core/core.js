@@ -77,9 +77,6 @@ core.use(session({
     }
 }));
 
-//接口监控后期修改为动态加载
-//core.use(require('./middleware/BusinessMonitor'));
-
 //delete DEBUG_FD
 delete process.env["DEBUG_FD"];
 
@@ -96,10 +93,10 @@ delete process.env["DEBUG_FD"];
         this._initMiddleWare();
         this._initCommonFunc();
         this._initAnnotation();
-        this._initI18N(__dirname + "/../app/lang", '.json');
-        this._initApp(__dirname + "/../app/common/");
-        this._initRouter(__dirname + '/../app/routes/');
-        this._initModules(__dirname + '/../app/models/');
+        this._initI18N(`${APP_PATH}lang`, '.json');
+        this._initApp(`${APP_PATH}common/`);
+        this._initRouter(`${APP_PATH}routes/`);
+        this._initModules(`${APP_PATH}models/`);
         this._initProcess();
     },
     _initRouter: function (path) {
@@ -132,10 +129,10 @@ delete process.env["DEBUG_FD"];
                             let keyArr = k.split(':');
                             let routerKey = `${keyArr[0]}:${value == '/' ? '' : value}${keyArr[1]}`;
                             global.annotationMap[routerKey] = tmpAnnotationMap[k];
-                            if(subModule.filters&&subModule.filters.length){
-                                 let filters=subModule.filters.map((v,idx,arr)=>{
-                                     return v.name;
-                                 });
+                            if (subModule.filters && subModule.filters.length) {
+                                let filters = subModule.filters.map((v, idx, arr) => {
+                                    return v.name;
+                                });
                                 global.annotationMap[routerKey].push(`@Filter:${filters.join(',')}`);
                             }
                         }
@@ -186,7 +183,7 @@ delete process.env["DEBUG_FD"];
             //处理路由
             var reg = /^(\w+)\.(get|post|delete|head)\(['"]([\/\w]+)['"]/i;
             let ret = reg[Symbol.match](line);
-            if (annotationGroup[beginIndex] &&ret/*&& line.indexOf('router.') == 0*/) {
+            if (annotationGroup[beginIndex] && ret/*&& line.indexOf('router.') == 0*/) {
                 let router = `${ret[2].toLowerCase()}:${ret[3]}`;
                 annotationMap[router] = annotationGroup[beginIndex];
                 ++beginIndex;
@@ -197,19 +194,19 @@ delete process.env["DEBUG_FD"];
     },
     _initAnnotation: function () {
         //对apidock注解进行处理
-        core.use('/apidoc',async(req, res, next)=>{
-            let apiDoc={};
-            for(let k in annotationMap){
-                 for(let v of annotationMap[k]){
-                      if(v.indexOf('@Document')==0){
-                          let docContent=v.split(':')[1];
-                          if(!apiDoc[k]){
-                              apiDoc[k]=[...docContent.split(',')];
-                          }else{
-                              apiDoc[k].push(...docContent.split(','));
-                          }
-                      }
-                 }
+        core.use('/apidoc', async (req, res, next) => {
+            let apiDoc = {};
+            for (let k in annotationMap) {
+                for (let v of annotationMap[k]) {
+                    if (v.indexOf('@Document') == 0) {
+                        let docContent = v.split(':')[1];
+                        if (!apiDoc[k]) {
+                            apiDoc[k] = [...docContent.split(',')];
+                        } else {
+                            apiDoc[k].push(...docContent.split(','));
+                        }
+                    }
+                }
             }
             res.send(apiDoc);
         });
@@ -229,13 +226,13 @@ delete process.env["DEBUG_FD"];
                             let annoFunc = filters[anno];
                             if (typeof annoFunc == 'function') {
                                 if (!await annoFunc(req, res)) {
-                                    colorlog.warning('Warning',`注解拦截:${key}:${anno}`);
+                                    colorlog.warning('Warning', `注解拦截:${key}:${anno}`);
                                     return;
-                                }else{
-                                    colorlog.success('DONE',`注解通过:${key}:${anno}`);
+                                } else {
+                                    colorlog.success('DONE', `注解通过:${key}:${anno}`);
                                 }
-                            }else{
-                                colorlog.warning('Error',`未定义路由注解:${key}:${anno}`);
+                            } else {
+                                colorlog.warning('Error', `未定义路由注解:${key}:${anno}`);
                             }
                         }
                     }
@@ -526,7 +523,7 @@ delete process.env["DEBUG_FD"];
         }
     },
     _initTemplate: function () {
-        let tplPath = path.join(__dirname, '../app/',(config.templateConfig && config.templateConfig.viewsPath) ? (config.templateConfig.viewsPath) : 'views');
+        let tplPath = path.join(__dirname, '../app/', (config.templateConfig && config.templateConfig.viewsPath) ? (config.templateConfig.viewsPath) : 'views');
         let useCache = (config.templateConfig && config.templateConfig.useCache) ? config.templateConfig.userCache : false;
         let viewEngine = (config.templateConfig && config.templateConfig.viewEngine) ? config.templateConfig.viewEngine : 'artTemplate';
         let defaultTplExt = (config.templateConfig && config.templateConfig.extName) ? config.templateConfig.extName : '.html';
@@ -559,7 +556,7 @@ delete process.env["DEBUG_FD"];
         global.newRouter = function (...filters) {
             let router = express.Router();
             //手动增加路由注解
-            router.filters=filters;
+            router.filters = filters;
             router.uploadFile = (mapUri, savePath, fileKey, callback) => {
                 var uploadHandler = multer({dest: savePath});
                 router.post(mapUri, uploadHandler.single(fileKey), callback);
@@ -569,7 +566,7 @@ delete process.env["DEBUG_FD"];
         let files = fs.readdirSync(commonPath);
         files.forEach(function logArrayElements(element, index, array) {
                 let moduleName = element.replace(/(.*)\.js/ig, "$1");
-                let modulePath=path.resolve(commonPath + (moduleName));
+                let modulePath = path.resolve(commonPath + (moduleName));
                 global[moduleName] = require(modulePath);
             }
         );
@@ -831,7 +828,7 @@ delete process.env["DEBUG_FD"];
     _initMiddleWare: function () {
         if (config.middleWare && config.middleWare.length) {
             for (let middleWare of config.middleWare) {
-                core.use(require(`./app/middleware/${middleWare}`));
+                core.use(require(`${APP_PATH}middleware/${middleWare}`));
             }
         }
         global.mw = {

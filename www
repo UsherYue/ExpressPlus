@@ -1,7 +1,7 @@
 #!/usr/core/env node
 
 /**
- * PHPProject
+ * WebStorm
  * Helper.php Created by usher.yue.
  * User: usher.yue
  * Date: 17/1/8
@@ -20,32 +20,32 @@ var cluster = require('cluster');
  * false 启动单核用于开发
  * @type {boolean}
  */
-const USE_CLUSTER  =  true ;
+global.USE_CLUSTER  =  true ;
 /**
  * app path
  * @type {string}
  */
-const APP_PATH = './app/';
+global.APP_PATH = `${__dirname}/app/`;
 /**
  * 名字空间配置文件
  * @type {string}
  */
-const NS_CONFIG = `${APP_PATH}conf/ns`;
+global.NS_CONFIG = `${APP_PATH}conf/ns`;
 /**
  * 应用全局配置文件
  * @type {string}
  */
-const APP_CONFIG = `${APP_PATH}conf/config`;
+global.APP_CONFIG = `${APP_PATH}conf/config`;
 /**
  * core入口禁止修改
  * @type {string}
  */
-const  CORE_PATH= './core/core';
+global.CORE_PATH= `${__dirname}/core/core`;
 /**
  * process name
  * @type {string}
  */
-const  PROCESS_NAME='ExpressPlus';
+global.PROCESS_NAME='ExpressPlus';
 //////////////////////////////////////////
 global.config = require(APP_CONFIG);
 global.config.nsConfig = require(NS_CONFIG);
