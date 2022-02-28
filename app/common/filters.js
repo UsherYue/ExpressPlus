@@ -19,8 +19,8 @@ module.exports=new class{
      */
     async LoginCheck(req,res){
 
-       // res.send('未登录请登录!')
-       // res.redirect('https://k12.12xue.com');
+        //res.send('未登录请登录!')
+        //res.redirect('https://k12.12xue.com');
         return true;
     }
 

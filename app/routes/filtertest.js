@@ -13,7 +13,7 @@ let router=newRouter();
 
 
 //@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
-//@Filter(LoginCheck,AccessCheck)
+//@Filter(Test,Analysist)
 router.get('/filter1',async(req,res,next)=>{
 
     res.send('test');
