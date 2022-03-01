@@ -13,11 +13,11 @@ var co = require('co');
 //global.redis
 //, { type: global.db.QueryTypes.SELECT}
 router.get('/test1', function (req, res, next) {
-    // co(function *() {
-    //   yield global.db.query('select * from test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT}).then(function (result) {
-    //       console.log(result);
-    //    });
-    // });
+    co(function *() {
+      yield global.db.query('select * from test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT}).then(function (result) {
+          console.log(result);
+       });
+    });
     // co(function *() {
     //     var promise=global.db.query('select * from test where name=\'123213\' limit 1',{ type:  global.db.QueryTypes.SELECT});
     //     console.log(promise instanceof  Promise);

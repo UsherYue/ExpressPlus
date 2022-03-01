@@ -349,9 +349,14 @@ delete process.env["DEBUG_FD"];
         let redisServerDb = (!global.config.redisConfig.db) ? 0 : global.config.redisConfig.db;
         let redisServerPassword = (!global.config.redisConfig.password) ? '' : global.config.redisConfig.password;
         let opt = {
-            host: redisServerIp,
-            port: redisServerPort,
-            db: redisServerDb,
+            socket:{
+                host: redisServerIp,
+                port: redisServerPort,
+                keepAlive:3600,
+                connectTimeout:5000,
+                password:redisServerPassword,
+                database:redisServerDb
+            },
             retry_strategy: function (options) {
                 if (options.error && options.error.code === 'ECONNREFUSED') {
                     return new Error('服务器拒接连接');
@@ -364,17 +369,22 @@ delete process.env["DEBUG_FD"];
                 return Math.min(options.attempt * 1000, 3000);
             }
         };
-        if (redisServerPassword) {
-            opt.password = global.config.redisConfig.password;
-        }
         let redis = require("redis");
-        let bluebird = require("bluebird");
-        bluebird.promisifyAll(redis.RedisClient.prototype);
-        bluebird.promisifyAll(redis.Multi.prototype);
+        //create client
         let client = redis.createClient(opt);
+        //socket close
         client.on('error', function (err) {
-            console.error("redis error....");
-        })
+            colorlog.warning("Redis",err.message);
+        });
+        //redis reconnect
+        client.on('reconnecting',()=>{
+            colorlog.warning("Redis","Reconnect Redis Server!");
+        });
+        //redis connect
+        client.on('connect', function () {
+            colorlog.success("Redis","Connect Redis Server Success!");
+        });
+        client.connect();
         global.redis = client;
     },
     _loadNs: function (routePath) {
@@ -513,8 +523,16 @@ delete process.env["DEBUG_FD"];
                 },
                 pool: (!global.config.dbConfig.pool) ? {
                     maxConnections: 20,
+                    min:5,
                     maxIdleTime: 30000
                 } : global.config.dbConfig.pool,
+            });
+
+            //Test DB Connect
+            sequelize.authenticate().then(function(e){
+                colorlog.success('Database','Conntent To Database Success');
+            }).catch(function (e){
+                colorlog.warning('Database','Unable to connect to the database For Reason:'+ JSON.stringify(e.message));
             });
             //golbal database
             global.db = sequelize;

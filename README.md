@@ -36,7 +36,7 @@ http(s)
 
 
 ##ExpressPluss封装思想 
-
+*  域名绑定自定义路由  
 *  前后端分离开发  
 *  数据库读写分离  
 *  MVC+MVVM   

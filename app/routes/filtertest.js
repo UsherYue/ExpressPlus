@@ -12,7 +12,7 @@ let router=newRouter();
 
 
 
-//@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
+//@Document(2020-11-11,v1,过滤拦截路由,prm1 整数,prm2 字符串)
 //@Filter(Test)
 router.get('/filter1',async(req,res,next)=>{
 
@@ -20,7 +20,7 @@ router.get('/filter1',async(req,res,next)=>{
 });
 
 
-//@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
+//@Document(2020-11-11,v1,过滤拦截路由,prm1 整数,prm2 字符串)
 router.get('/filter2',async(req,res,next)=>{
 
     res.send('test');
@@ -28,7 +28,7 @@ router.get('/filter2',async(req,res,next)=>{
 
 
 
-//@Document(2020-11-11,过滤拦截路由,prm1 整数,prm2 字符串)
+//@Document(2020-11-11,v1,过滤拦截路由,prm1 整数,prm2 字符串)
 router.get('/filter3',async(req,res,next)=>{
 
     res.send('test');

@@ -1,4 +1,4 @@
-#!/usr/core/env node
+#!/usr/bin/env node
 
 /**
  * WebStorm
@@ -14,6 +14,7 @@ var http = require('http');
 var https = require('https');
 var path = require('path');
 var cluster = require('cluster');
+const fs=require('fs');
 
 ///////////进程启动控制状态/////////////////
 /**
@@ -88,12 +89,11 @@ if (cluster.isMaster) {
     }
     //http servers port
     if(httpsPort){
-        const fs=require()
         const options = {
-            key: fs.readFileSync('test/fixtures/keys/agent2-key.pem'),
-            cert: fs.readFileSync('test/fixtures/keys/agent2-cert.pem')
+            key: fs.readFileSync(`${APP_PATH}cert/${config.httpConfig.cert.key}`),
+            cert: fs.readFileSync(`${APP_PATH}cert/${config.httpConfig.cert.cert}`)
         };
-        const httpsServer = https.createServer(app);
+        const httpsServer = https.createServer(options,app);
         httpsServer.listen(httpsPort);
         httpsServer.on('error', onError);
         httpsServer.on('listening', onListening);

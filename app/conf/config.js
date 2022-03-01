@@ -9,35 +9,36 @@
 module.exports = {
     dbConfig: {
         dbtype: 'mysql',
-        dbname: 'test',
+        dbname: 'openapi_v3',
         dialectOptions: {
             supportBigNumbers: true
         },
         write: {
-            host: '172.16.200.204',
+            host: '172.16.205.122',
             port: 3306,
             username: 'root',
-            password: 'rjgrid'
+            password: '26e64a66112a8579'
         },
         read: [
             {
-                host: '172.16.200.204',
+                host: '172.16.205.122',
                 port: 3306,
                 username: 'root',
-                password: 'rjgrid'
+                password: '26e64a66112a8579'
             }
         ]
     },
     httpConfig: {
         httpPort: 3002,
-        // httpsPort:443,
-        // cert:{
-        //
-        // }
+        //httpsPort:443,
+        cert:{
+            key:'key.pem',
+            cert:'cert.pem'
+        }
     },
     redisConfig:{
         host:'172.16.200.202',
-        port:6380,
+        port:6379,
         db:0,
         password:''
     },
