@@ -10,6 +10,7 @@ let router=newRouter();
 
 /*
  * Description:测试redis
+ * https://github.com/redis/node-redis/tree/master/examples redis使用案例 支持await async
  * User: usher.yue
  * Date: 2022/03/01
  * Time: 17:25

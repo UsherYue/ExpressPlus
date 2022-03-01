@@ -6,7 +6,8 @@ Node Version:8.5.0+
 
 ## 目录结构  
 ├── app                         // 应用代码  
-│   ├── config.js                  //配置文件   
+│   ├── cert                    //ssl证书目录  
+│   ├── config.js                //配置文件   
 │   ├── common                   // 开发环境    
 │   ├── lang                      // 国际化  
 │   ├── middleware                // 中间件  
@@ -22,12 +23,14 @@ Node Version:8.5.0+
 └── www            //启动入口
 ## 核心对象(函数)  
 ```
-global.db         Sequlize全局对象
-global.redis      Redis全局客户端
-global.models     全局模型列表
-global.newRouer() 全局路由构造函数
-global.M()        全局模型加载函数
-global.L()        i18n全局函数
+global.db               Sequlize全局对象
+global.redis            Redis全局客户端
+global.models           全局模型列表
+global.VModel           全局数据库虚拟模型类
+global.newRouer()       全局路由构造函数
+global.newSqlBuilder()  全局SQL构造器创建方法
+global.M()              全局模型加载函数
+global.L()              i18n全局函数
 ``` 
 
 ## 启动方法
