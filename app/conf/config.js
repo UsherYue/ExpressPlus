@@ -29,7 +29,11 @@ module.exports = {
         ]
     },
     httpConfig: {
-        port: 3002
+        httpPort: 3002,
+        // httpsPort:443,
+        // cert:{
+        //
+        // }
     },
     redisConfig:{
         host:'172.16.200.202',

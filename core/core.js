@@ -333,10 +333,10 @@ delete process.env["DEBUG_FD"];
     },
     _initStatic: function () {
         if (!global.config.staticConfig || !global.config.staticConfig.length) {
-            core.use('/static', express.static('static'));
+            core.use('/static', express.static(`${APP_ROOT}/static`));
         } else {
             global.config.staticConfig.forEach(function (item, index, array) {
-                core.use(item.router, express.static(`../${item.path}`, {index: item.index ? item.index : 'index.html'}));
+                core.use(item.router, express.static(`${APP_ROOT}/${item.path}`, {index: item.index ? item.index : 'index.html'}));
             });
         }
     },

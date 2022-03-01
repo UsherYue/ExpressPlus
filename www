@@ -11,6 +11,7 @@
 'use strict';
 
 var http = require('http');
+var https = require('https');
 var path = require('path');
 var cluster = require('cluster');
 
@@ -26,6 +27,11 @@ global.USE_CLUSTER  =  true ;
  * @type {string}
  */
 global.APP_PATH = `${__dirname}/app/`;
+/**
+ * 项目目录
+ * @type {string}
+ */
+global.APP_ROOT=__dirname;
 /**
  * 名字空间配置文件
  * @type {string}
@@ -46,11 +52,13 @@ global.CORE_PATH= `${__dirname}/core/core`;
  * @type {string}
  */
 global.PROCESS_NAME='ExpressPlus';
-//////////////////////////////////////////
+///////////////加载模块/////////////////////
 global.config = require(APP_CONFIG);
 global.config.nsConfig = require(NS_CONFIG);
-var app = require(CORE_PATH);
-
+const app = require(CORE_PATH);
+//////////////////读取配置选项////////////////////
+const httpPort = normalizePort(process.env.HTTP_PORT || global.config.httpConfig.httpPort)||0;
+const httpsPort = normalizePort(process.env.HTTPS_PORT || global.config.httpConfig.httpsPort)||0;
 //run service
 if (cluster.isMaster) {
     var workersNum = 1;
@@ -71,13 +79,25 @@ if (cluster.isMaster) {
     });
     process.title = `${PROCESS_NAME} Master  Process `;
 } else {
-    //server port
-    var port = normalizePort(process.env.PORT || global.config.httpConfig.port);
-    app.set('port', port);
-    var server = http.createServer(app);
-    server.listen(port);
-    server.on('error', onError);
-    server.on('listening', onListening);
+    //http server port
+    if(httpPort){
+        const httpServer = http.createServer(app);
+        httpServer.listen(httpPort);
+        httpServer.on('error', onError);
+        httpServer.on('listening', onListening);
+    }
+    //http servers port
+    if(httpsPort){
+        const fs=require()
+        const options = {
+            key: fs.readFileSync('test/fixtures/keys/agent2-key.pem'),
+            cert: fs.readFileSync('test/fixtures/keys/agent2-cert.pem')
+        };
+        const httpsServer = https.createServer(app);
+        httpsServer.listen(httpsPort);
+        httpsServer.on('error', onError);
+        httpsServer.on('listening', onListening);
+    }
     //script file
     const scriptName = path.parse(__filename).name;
     process.title = `${PROCESS_NAME} Worker  Process ${scriptName}`;
@@ -101,40 +121,33 @@ function normalizePort(val) {
 
 /**
  *
- * Normalize a port into a number, string, or false.
- * Normalize a port into a number, string, or false.
  * @param error
  */
 function onError(error) {
-    if (error.syscall !== 'listen') {
-        throw error;
-    }
-    var bind = typeof port === 'string'
-        ? 'Pipe ' + port
-        : 'Port ' + port;
-    // handle specific listen errors with friendly messages
     switch (error.code) {
         case 'EACCES':
-            colorlog.warning('Error',bind + ' requires elevated privileges');
+            colorlog.warning('Error',error.port + ' requires elevated privileges');
             process.exit(1);
             break;
         case 'EADDRINUSE':
-            colorlog.warning('Error',bind + ' is already in use');
+            colorlog.warning('Error',error.port  + ' is already in use');
             process.exit(1);
             break;
         default:
-            throw error;
+        throw error;
     }
+
 }
 
 /**
  * Event listener for HTTP server "listening" event.
  */
 function onListening() {
-    var addr = server.address();
-    var bind = typeof addr === 'string'
-        ? 'pipe ' + addr
-        : 'port ' + addr.port;
-    var debug = require('debug')('debugserver');
-    debug('Express Listening on ' + bind);
+    let debug = require('debug')('debugserver');
+        httpPort&&debug('Express Listening on ' + httpPort);
+        httpsPort&&debug('Express Listening on ' + httpsPort);
 }
+
+
+
+
