@@ -20,6 +20,15 @@ Node Version:8.5.0+
 ├── package.json  
 ├── README.md                    
 └── www            //启动入口
+## 核心对象(函数)  
+```
+global.db         Sequlize全局对象
+global.redis      Redis全局客户端
+global.models     全局模型列表
+global.newRouer() 全局路由构造函数
+global.M()        全局模型加载函数
+global.L()        i18n全局函数
+``` 
 
 ## 启动方法
 ```  
