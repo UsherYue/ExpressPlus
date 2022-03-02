@@ -47,7 +47,7 @@ module.exports = function (db) {
              * @param querySql
              * @returns {null}
              */
-            query(querySql) {
+            async query(querySql) {
                 return null;
             }
 
@@ -56,7 +56,7 @@ module.exports = function (db) {
              * @param execSql
              * @returns {null}
              */
-            exec(execSql) {
+            async exec(execSql) {
                 return null;
             }
 
@@ -65,7 +65,7 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            getOne($where) {
+            async getOne($where) {
 
                 return null;
 
@@ -75,7 +75,7 @@ module.exports = function (db) {
              * 返回描述
              * @returns {null}
              */
-            desc() {
+            async desc() {
                 return null;
             }
 
@@ -84,37 +84,7 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            hasOne($where) {
-                return null;
-
-            }
-
-            /**
-             *
-             * @param $where
-             * @returns {null}
-             */
-            get($where) {
-                return null;
-
-            }
-
-
-            /**
-             *
-             * @param $where
-             * @returns {null}
-             */
-            has($where) {
-                return null;
-            }
-
-            /**
-             *
-             * @param $where
-             * @returns {null}
-             */
-            update($where) {
+            async hasOne($where) {
                 return null;
 
             }
@@ -124,7 +94,27 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            delete($where) {
+            async get($where) {
+                return null;
+
+            }
+
+
+            /**
+             *
+             * @param $where
+             * @returns {null}
+             */
+            async has($where) {
+                return null;
+            }
+
+            /**
+             *
+             * @param $where
+             * @returns {null}
+             */
+            async update($where) {
                 return null;
 
             }
@@ -134,7 +124,7 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            insert($where) {
+            async delete($where) {
                 return null;
 
             }
@@ -144,7 +134,7 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            count($where) {
+            async insert($where) {
                 return null;
 
             }
@@ -154,7 +144,7 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            group($where) {
+            async count($where) {
                 return null;
 
             }
@@ -164,7 +154,7 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            expr($where) {
+            async group($where) {
                 return null;
 
             }
@@ -174,7 +164,17 @@ module.exports = function (db) {
              * @param $where
              * @returns {null}
              */
-            getJoin($where) {
+            async expr($where) {
+                return null;
+
+            }
+
+            /**
+             *
+             * @param $where
+             * @returns {null}
+             */
+            async getJoin($where) {
                 return null;
 
             }

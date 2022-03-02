@@ -1,21 +1,11 @@
 /**
  * ExpressPlus
- * User.js Created by usher.yue.
+ * UserVModel.js Created by usher.yue.
  * User: usher.yue
  * Date: 2022/3/2
  * Time: 08:47
- * https://www.kancloud.cn/manual/thinkphp5/135195
- *
+ * 通过VModel 虚拟模型进行数据库操作
  */
-/**
- *   //创建orm模型
-     const userOrm=global.db.define('uc_user',{});
-     userOrm.getName=function (){
-        return  this.tableName;
-    };
-    module.exports= userORM;
- */
-
 
 
 //创建虚拟模型

@@ -30,7 +30,7 @@ router.get('/index',function (req,res,next) {
     // res.render('index.tplx',{
     //     list:[1,2,3,4,5]
     // });
-   let ret=M('User').getName();
+   let ret=M('UserModel').getName();
    console.log(ret);
     res.send("ssss");
 });
