@@ -536,6 +536,8 @@ delete process.env["DEBUG_FD"];
             });
             //golbal database
             global.db = sequelize;
+            global.DB=Sequelize;
+            global.VModel= (tableName)=>new (require(`${APP_ROOT}/core/adapter/orm/mysql-base`)(global.db)(tableName));
         } catch (e) {
             console.error('db init error!....');
         }
