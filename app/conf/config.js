@@ -66,8 +66,7 @@ module.exports = {
     templateConfig:{
         viewsPath:'views',
         useCache:false,
-        viewEngine:'artTemplate',
+        viewEngine:'ejs',
         extName:'.tplx',
-        encoding:'utf8'
     }
 };

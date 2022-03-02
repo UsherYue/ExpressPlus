@@ -27,8 +27,15 @@ router.get('/index',function (req,res,next) {
     // console.log(__('Hello'));
     // setLocale('zh-CN')
     // console.log(L('Hello'));
-    res.render('index',{
+    res.render('index.tplx',{
         list:[1,2,3,4,5]
+    });
+});
+
+//http://127.0.0.1:3001/index/v1/indexejs访问 模板引擎
+router.get('/indexejs',function (req,res,next) {
+    res.render('index.ejs',{
+        content:'EJS Tempate Page!'
     });
 });
 
