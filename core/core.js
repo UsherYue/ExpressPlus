@@ -63,7 +63,7 @@ core.use(session({
                 return new FileStore(global.config.sessionConfig.options);
             }
             case 'memcached': {
-                var FileStore = require('connect-memcached')(session);
+                var MemcachedStore = require('connect-memcached')(session);
                 return new MemcachedStore(global.config.sessionConfig.options);
             }
         }

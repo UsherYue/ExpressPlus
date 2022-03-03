@@ -19,18 +19,17 @@ const MAX_TIMEOUT = 30000;
 var _toJson = (str) => JSON.parse(str);
 
 module.exports = {
-    post: (url, params, decode) => {
-        return new Promise((resolve, reject) => {
-            request.post({url: url, form: params, timeout: MAX_TIMEOUT}, (error, response, body) => {
-                if (!error && response.statusCode == 200) {
-                    resolve(decode === true ? _toJson(body) : body);
-                } else {
-                    resolve(false);
-                }
-            });
-        });
-    },
-    post_v2: (url, params, decode, header = {}, body = '', ca = {}) => {
+    /**
+     * http post
+     * @param url
+     * @param params
+     * @param decode
+     * @param header
+     * @param body
+     * @param ca
+     * @returns {Promise<unknown>}
+     */
+    post: (url, params, decode, header = {}, body = '', ca = {}) => {
         let opts = {
             timeout: MAX_TIMEOUT,
             url: url,
@@ -115,40 +114,6 @@ module.exports = {
                     resolve(false)
                 }
             })
-        });
-    },
-    getGbk: (url, decode) => {
-        return new Promise((resolve, reject) => {
-            var http = require('https'),
-                Iconv = require('iconv').Iconv;
-            var data = '';
-            http.get(url, function (res) {
-                res.setEncoding('binary');
-                res.on('data', function (chunk) {
-                    data += chunk;
-                });
-                res.on('end', function () {
-                    var decodedBody = new Iconv('GBK', 'UTF-8').convert(new Buffer(data, 'binary')).toString();
-                    resolve(decode === true ? _toJson(decodedBody) : decodedBody);
-                });
-            });
-        });
-    },
-    getGbkNoSsl: (url, decode) => {
-        return new Promise((resolve, reject) => {
-            var http = require('app/common/http'),
-                Iconv = require('iconv').Iconv;
-            var data = '';
-            http.get(url, function (res) {
-                res.setEncoding('binary');
-                res.on('data', function (chunk) {
-                    data += chunk;
-                });
-                res.on('end', function () {
-                    var decodedBody = new Iconv('GBK', 'UTF-8').convert(new Buffer(data, 'binary')).toString();
-                    resolve(decode === true ? _toJson(decodedBody) : decodedBody);
-                });
-            });
         });
     },
     put: (url, params, decode) => {
