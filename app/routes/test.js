@@ -84,7 +84,6 @@ router.get('/test2', function (req, res, next) {
 });
 
 
-//@Document(2020-12-11,生成JWT Token,prm1 整数,prm2 字符串)
 router.get('/testjwt',async (req,res,next)=>{
     let token=jwt.sign({a:1},'1d');
     // jwt.echo();

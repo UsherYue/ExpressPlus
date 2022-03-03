@@ -11,16 +11,13 @@
 let router=newRouter();
 
 
-
-//@Document(2020-11-11,v1,过滤拦截路由,prm1 整数,prm2 字符串)
-//@Filter(Test)
+//@Document(岳东卫,2020-11-11,过滤拦截路由,OAuth认证相关,UserLogin)
 router.get('/filter1',async(req,res,next)=>{
 
     res.send('test');
 });
 
-
-//@Document(2020-11-11,v1,过滤拦截路由,prm1 整数,prm2 字符串)
+//@Filter(Test)
 router.get('/filter2',async(req,res,next)=>{
 
     res.send('test');
@@ -28,7 +25,7 @@ router.get('/filter2',async(req,res,next)=>{
 
 
 
-//@Document(2020-11-11,v1,过滤拦截路由,prm1 整数,prm2 字符串)
+//@Document(张三,2020-11-11,过滤拦截路由,OAuth认证相关,UserInfo)
 router.get('/filter3',async(req,res,next)=>{
 
     res.send('test');

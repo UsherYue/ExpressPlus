@@ -205,10 +205,20 @@ delete process.env["DEBUG_FD"];
                         } else {
                             apiDoc[k].push(...docContent.split(','));
                         }
+                        if(apiDoc[k][3]&&apiDoc[k][4]){
+                            let keyMeta=apiDoc[k][4];
+                            let summary=apiDoc[k][3];
+                            let apiInterfaces=document['summary'];
+                            if(apiInterfaces&&apiInterfaces[summary]&&apiInterfaces[summary][keyMeta]){
+                                let metaData=apiInterfaces[summary][keyMeta];
+                                apiDoc[k].push(metaData);
+                            }
+                        }
                     }
                 }
             }
-            res.send(apiDoc);
+            let ret={projectName:document.projectName||'',summary:apiDoc}
+            res.send(ret);
         });
         //对注解进行拦截
         core.use(async (req, res, next) => {
