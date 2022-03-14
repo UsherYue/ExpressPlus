@@ -14,15 +14,20 @@ const http = require('http');
 const https = require('https');
 const path = require('path');
 const cluster = require('cluster');
-const fs=require('fs');
+const fs = require('fs');
 
 ///////////进程启动控制状态/////////////////
+/**
+ * 主页面入口地址
+ * @type {string}
+ */
+global.ELECTRON_MAIN_URL='http://127.0.0.1:3002/';
 /**
  * true开启集群多核
  * false 启动单核用于开发
  * @type {boolean}
  */
-global.USE_CLUSTER  =  true ;
+global.USE_CLUSTER = false;
 /**
  * app path
  * @type {string}
@@ -32,7 +37,7 @@ global.APP_PATH = `${__dirname}/app/`;
  * 项目目录
  * @type {string}
  */
-global.APP_ROOT=__dirname;
+global.APP_ROOT = __dirname;
 /**
  * 名字空间配置文件
  * @type {string}
@@ -47,53 +52,53 @@ global.APP_CONFIG = `${APP_PATH}conf/config`;
  * core入口禁止修改
  * @type {string}
  */
-global.CORE_PATH= `${__dirname}/core/core`;
+global.CORE_PATH = `${__dirname}/core/core`;
 /**
  * process name
  * @type {string}
  */
-global.PROCESS_NAME='ExpressPlus';
+global.PROCESS_NAME = 'ExpressPlus';
 ///////////////加载模块/////////////////////
 global.config = require(APP_CONFIG);
 global.config.nsConfig = require(NS_CONFIG);
 const app = require(CORE_PATH);
 //////////////////读取配置选项////////////////////
-const httpPort = normalizePort(process.env.HTTP_PORT || global.config.httpConfig.httpPort)||0;
-const httpsPort = normalizePort(process.env.HTTPS_PORT || global.config.httpConfig.httpsPort)||0;
+const httpPort = normalizePort(process.env.HTTP_PORT || global.config.httpConfig.httpPort) || 0;
+const httpsPort = normalizePort(process.env.HTTPS_PORT || global.config.httpConfig.httpsPort) || 0;
 //run service
 if (cluster.isMaster) {
     var workersNum = 1;
-    colorlog.info('Master',"Run ExpressPlus Master Process ,PID:"+process.pid);
+    colorlog.info('Master', "Run ExpressPlus Master Process ,PID:" + process.pid);
     // Fork workers.
-    if(USE_CLUSTER){
-        workersNum=require('os').cpus().length
+    if (USE_CLUSTER) {
+        workersNum = require('os').cpus().length
     }
     for (let i = 0; i < workersNum; i++) {
         cluster.fork();
     }
     cluster.on('listening', function (worker, address) {
-        colorlog.info('Worker','PID:'+worker.process.pid+',Listen Port:' + address.port);
+        colorlog.info('Worker', 'PID:' + worker.process.pid + ',Listen Port:' + address.port);
     });
     cluster.on('exit', function (worker, code, signal) {
-        colorlog.warning('Error','Worker ' + worker.process.pid + ' Exited');
+        colorlog.warning('Error', 'Worker ' + worker.process.pid + ' Exited');
         cluster.fork();
     });
     process.title = `${PROCESS_NAME} Master  Process `;
 } else {
     //http server port
-    if(httpPort){
+    if (httpPort) {
         const httpServer = http.createServer(app);
         httpServer.listen(httpPort);
         httpServer.on('error', onError);
         httpServer.on('listening', onListening);
     }
     //http servers port
-    if(httpsPort){
+    if (httpsPort) {
         const options = {
             key: fs.readFileSync(`${APP_PATH}cert/${config.httpConfig.cert.key}`),
             cert: fs.readFileSync(`${APP_PATH}cert/${config.httpConfig.cert.cert}`)
         };
-        const httpsServer = https.createServer(options,app);
+        const httpsServer = https.createServer(options, app);
         httpsServer.listen(httpsPort);
         httpsServer.on('error', onError);
         httpsServer.on('listening', onListening);
@@ -126,17 +131,71 @@ function normalizePort(val) {
 function onError(error) {
     switch (error.code) {
         case 'EACCES':
-            colorlog.warning('Error',error.port + ' requires elevated privileges');
+            colorlog.warning('Error', error.port + ' requires elevated privileges');
             process.exit(1);
             break;
         case 'EADDRINUSE':
-            colorlog.warning('Error',error.port  + ' is already in use');
+            colorlog.warning('Error', error.port + ' is already in use');
             process.exit(1);
             break;
         default:
-        throw error;
+            throw error;
     }
 
+}
+
+
+if (cluster.isMaster) {
+
+    const {app: winApp, BrowserWindow} = require('electron');
+    //global win
+    let win=null;
+    /**
+     * 集群master消息
+     */
+    cluster.on('message',  (worker, message, handle) => {
+          let task=message.task;
+          //加载
+          win&&(win.loadURL(ELECTRON_MAIN_URL));
+    });
+
+    /**
+     * 创建窗口
+     */
+    function createWindow() {
+         win = new BrowserWindow({
+            width: 700,
+            height: 530,
+            maxWidth: 700,
+            maxHeight: 530,
+            maximizable: false,
+            frame:false,
+            webPreferences: {
+                preload: path.join(__dirname, 'electron/preload-main.js'),
+                navigateOnDragDrop: true, //拖拽图片打开新窗口
+                nodeIntegration: true,  //注入node渲染进程
+                contextIsolation: false,  //上下文隔离 可以使用node
+            }
+        });
+    };
+
+    //app准备完善
+    winApp.whenReady().then(() => {
+        //创建窗口
+        createWindow();
+        //mac下active创建窗口
+        winApp.on('activate', () => {
+            if (BrowserWindow.getAllWindows().length === 0) {
+                createWindow()
+            }
+        });
+        //mac下窗口关闭
+        winApp.on('window-all-closed', () => {
+            if (process.platform !== 'darwin') {
+                winApp.quit()
+            }
+        })
+    })
 }
 
 /**
@@ -144,10 +203,8 @@ function onError(error) {
  */
 function onListening() {
     let debug = require('debug')('debugserver');
-        httpPort&&debug('Express Listening on ' + httpPort);
-        httpsPort&&debug('Express Listening on ' + httpsPort);
+    httpPort && debug('Express Listening on ' + httpPort);
+    httpsPort && debug('Express Listening on ' + httpsPort);
+    //load main in worder when http server is run
+    process.send({task:"load-mainwin"});
 }
-
-
-
-

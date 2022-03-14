@@ -205,6 +205,7 @@ delete process.env["DEBUG_FD"];
                         } else {
                             apiDoc[k].push(...docContent.split(','));
                         }
+                        //fill meta data
                         if(apiDoc[k][3]&&apiDoc[k][4]){
                             let keyMeta=apiDoc[k][4];
                             let summary=apiDoc[k][3];

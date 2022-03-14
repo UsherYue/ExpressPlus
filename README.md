@@ -33,14 +33,21 @@ global.M()              全局模型加载函数
 global.L()              全局i18n加载函数
 ``` 
 
-## 启动方法
+## http[s]架构启动方法-----适用于Web API开发
 ```  
-  npm install    //安装依赖
-  npm start      //运行框架
+  1、去掉package.json中的electron模块
+  2、npm install                     //安装依赖
+  3、npm start                       //运行框架
 ```
+## http[s]+electron架构启动方法-----适用桌面开发
+```  
+  1、npm install                 //安装依赖
+  2、electron www-electron       //运行框架
+```
+
 ## 模板引擎   
 art-template    https://ejs.bootcss.com/#docs  
-EJS             https://ejs.bootcss.com/#docs    
+ejs             https://ejs.bootcss.com/#docs    
   
  
 ## 服务调用协议     
@@ -49,6 +56,7 @@ http(s)
 
 
 ## ExpressPluss封装思想 
+*  支持Electron-UI  
 *  域名绑定自定义路由  
 *  前后端分离开发  
 *  数据库读写分离  
