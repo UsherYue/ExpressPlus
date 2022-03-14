@@ -23,6 +23,16 @@ const fs = require('fs');
  */
 global.ELECTRON_MAIN_URL='http://127.0.0.1:3002/';
 /**
+ * Electron root
+ * @type {string}
+ */
+global.ELECTRON_ROOT=path.join(__dirname, 'electron/');
+/**
+ * 主窗口preload位置
+ * @type {string}
+ */
+global.ELECTRON_MAIN_PRELOAD=path.join(ELECTRON_ROOT, 'preload-main.js');
+/**
  * true开启集群多核
  * false 启动单核用于开发
  * @type {boolean}
@@ -171,7 +181,7 @@ if (cluster.isMaster) {
             maximizable: false,
             frame:false,
             webPreferences: {
-                preload: path.join(__dirname, 'electron/preload-main.js'),
+                preload:ELECTRON_MAIN_PRELOAD ,
                 navigateOnDragDrop: true, //拖拽图片打开新窗口
                 nodeIntegration: true,  //注入node渲染进程
                 contextIsolation: false,  //上下文隔离 可以使用node
