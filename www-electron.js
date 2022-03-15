@@ -6,7 +6,7 @@
  * User: usher.yue
  * Date: 17/1/8
  * Time: 下午5:27
- * www启动入口
+ * www+electron启动入口,切记安装electron
  */
 'use strict';
 
@@ -67,7 +67,7 @@ global.CORE_PATH = `${__dirname}/core/core`;
  * process name
  * @type {string}
  */
-global.PROCESS_NAME = 'ExpressPlus';
+global.PROCESS_NAME = 'WWW-ELECTRON';
 ///////////////加载模块/////////////////////
 global.config = require(APP_CONFIG);
 global.config.nsConfig = require(NS_CONFIG);
@@ -78,7 +78,7 @@ const httpsPort = normalizePort(process.env.HTTPS_PORT || global.config.httpConf
 //run service
 if (cluster.isMaster) {
     var workersNum = 1;
-    colorlog.info('Master', "Run ExpressPlus Master Process ,PID:" + process.pid);
+    colorlog.info('Master', `Run ${PROCESS_NAME} Master Process ,PID:` + process.pid);
     // Fork workers.
     if (USE_CLUSTER) {
         workersNum = require('os').cpus().length
