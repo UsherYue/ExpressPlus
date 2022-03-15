@@ -115,12 +115,11 @@ if (cluster.isMaster) {
     mqttServer.listen(MQTT_PORT, function () {
          // console.log('MQTT Listen Portt:', MQTT_PORT)
     });
+    //////////MQTT协议->HTTP路由开发业务更简单//////////
 
-    //////////MQTT->HTTP开发业务更简单//////////
+    ////////////MQTT协议也可以直接调用Model进行业务编写//////////
 
-
-
-    //////////MQTT 转 HTTP//////////
+    //////////MQTT协议 转 HTTP//////////
     //script file
     const scriptName = path.parse(__filename).name;
     process.title = `${PROCESS_NAME} Worker  Process ${scriptName}`;
