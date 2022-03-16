@@ -20,7 +20,7 @@ Node Version:10.0+
 ├── .gitignore          
 ├── package.json  
 ├── README.md                    
-└── www                     //启动入口
+└── www                     //启动入口  
 └── www-electron            //electron桌面启动入口
 ## 核心对象(函数)  
 ```

@@ -6,7 +6,7 @@
  * User: usher.yue
  * Date: 17/1/8
  * Time: 下午5:27
- * mqtt-server启动入口
+ * mqtt-server-tls启动入口
  */
 'use strict';
 
@@ -16,15 +16,23 @@ const path = require('path');
 const cluster = require('cluster');
 const fs=require('fs');
 const aedes = require('aedes')();
-const mqttServer = require('net').createServer(aedes.handle);
+
 
 
 ///////////进程启动控制状态/////////////////
 /**
+ * MQTT TLS  CERT CONFIG
+ * @type {{PUBLIC_CERT_FILE: string, PRIVATE_KEY_FILE: string}}
+ */
+global.MQTT_TLS_OPTIONS={
+    PRIVATE_KEY_FILE:`./app/cert/key.pem`,
+    PUBLIC_CERT_FILE:`./app/cert/cert.pem`
+};
+/**
  * mqtt server监听服务
  * @type {number}
  */
-global.MQTT_PORT=33301;
+global.MQTT_TLS_PORT=33301;
 /**
  * true开启集群多核
  * false 启动单核用于开发
@@ -80,8 +88,8 @@ if (cluster.isMaster) {
         cluster.fork();
     }
     cluster.on('listening', function (worker, address) {
-        if( address.port==MQTT_PORT){
-            colorlog.info('Worker','PID:'+worker.process.pid+',mqtt Listen Port:' + address.port);
+        if( address.port==MQTT_TLS_PORT){
+            colorlog.info('Worker','PID:'+worker.process.pid+',mqtt tls Listen Port:' + address.port);
         }else{
             colorlog.info('Worker','PID:'+worker.process.pid+',http(s) Listen Port:' + address.port);
         }
@@ -111,13 +119,20 @@ if (cluster.isMaster) {
         httpsServer.on('error', onError);
         httpsServer.on('listening', onListening);
     }
+    //tls
+    const options = {
+        key: fs.readFileSync(MQTT_TLS_OPTIONS.PRIVATE_KEY_FILE),
+        cert: fs.readFileSync(MQTT_TLS_OPTIONS.PUBLIC_CERT_FILE)
+    }
+    const mqttServer = require('tls').createServer(options,aedes.handle);
     //MQTT协议监听
-    mqttServer.listen(MQTT_PORT, function () {
+    mqttServer.listen(MQTT_TLS_PORT, function () {
          // console.log('MQTT Listen Portt:', MQTT_PORT)
     });
     //////////MQTT协议->HTTP路由开发业务更简单//////////
 
     ////////////MQTT协议也可以直接调用Model进行业务编写//////////
+    //https://github.com/UsherYue/aedes/blob/main/examples/clusters/index.js
 
     //////////MQTT协议 转 HTTP//////////
     //script file

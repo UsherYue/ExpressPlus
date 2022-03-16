@@ -21,7 +21,7 @@ const fs = require('fs');
  * 主页面入口地址
  * @type {string}
  */
-global.ELECTRON_MAIN_URL='http://127.0.0.1:3002/';
+global.ELECTRON_MAIN_URL='https://www.baidu.com';
 /**
  * Electron root
  * @type {string}
@@ -178,8 +178,8 @@ if (cluster.isMaster) {
             height: 530,
             maxWidth: 700,
             maxHeight: 530,
-            maximizable: false,
-            frame:false,
+         //   maximizable: false,
+          //  frame:false,
             webPreferences: {
                 preload:ELECTRON_MAIN_PRELOAD ,
                 navigateOnDragDrop: true, //拖拽图片打开新窗口
