@@ -21,7 +21,7 @@ const fs = require('fs');
  * 主页面入口地址
  * @type {string}
  */
-global.ELECTRON_MAIN_URL='https://www.baidu.com';
+global.ELECTRON_MAIN_URL='http://127.0.0.1:3002';
 /**
  * Electron root
  * @type {string}
