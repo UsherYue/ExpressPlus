@@ -7,6 +7,11 @@
  */
 
 var qiniu = require('qiniu');
+var Buffer = require('buffer').Buffer
+
+//base64
+const base64Encode = str => Buffer.from(str).toString('base64');
+const base64Decode = str => new Buffer(str, 'base64').toString();
 
 module.exports = {
     /**
@@ -43,16 +48,73 @@ module.exports = {
         });
     },
     /**
+     * 七牛持久化操作
+     * @param accessKey
+     * @param secretKey
+     * @param inputFile
+     * @param outputFile
+     * @param srcBucket
+     * @param saveBucket
+     */
+    docConvertToPdf: function (accessKey, secretKey, inputFile, outputFile, srcBucket, saveBucket) {
+        return new Promise(((resolve, reject) => {
+            let mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
+            let operManager = new qiniu.fop.OperationManager(mac, config);
+            let fops = [
+                `doc-convert/preview|saveas/${base64Encode(saveBucket + ':' + outputFile)}`
+            ];
+            //默认pipe
+            let pipline = '';
+            let options = {
+                notifyURL: '',
+                force: false
+            };
+            // 持久化数据处理返回的是任务的persistentId，可以根据这个id查询处理状态
+            operManager.pfop(srcBucket, inputFile, fops, pipline, options, (err, respBody, respInfo) => {
+                if (err) {
+                    resolve(false);
+                }
+                if (respInfo.statusCode == 200) {
+                    resolve(respBody.persistentId);
+                } else {
+                    resolve(false);
+                }
+            });
+        }));
+    },
+    /**
+     * 查询持久化结果
+     * @param persistentId
+     */
+    queryConvertInfo: (persistentId) => {
+        return new Promise((resolve, reject) => {
+            let config = new qiniu.conf.Config();
+            config.useHttpsDomain = true;
+            let operManager = new qiniu.fop.OperationManager(null, config);
+            // 持久化数据处理返回的是任务的persistentId，可以根据这个id查询处理状态
+            operManager.prefop(persistentId, function (err, respBody, respInfo) {
+                if (err) {
+                    resolve(false);
+                }
+                if (respInfo.statusCode == 200) {
+                    resolve(respBody);
+                } else {
+                    resolve(respBody);
+                }
+            });
+        });
+    },
+    /**
      * 获取七牛上传token
      * @param accessKey
      * @param secretKey
      * @param bucket
      * @returns {Promise.<*|Promise>}
      */
-    uploadToken:async (accessKey, secretKey, bucket)=>{
+    uploadToken: async (accessKey, secretKey, bucket) => {
         let options = {
             scope: bucket,
-            expires:600
+            expires: 600
         };
         var mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
         let putPolicy = new qiniu.rs.PutPolicy(options);

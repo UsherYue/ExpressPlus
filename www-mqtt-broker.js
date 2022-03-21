@@ -115,6 +115,53 @@ if (cluster.isMaster) {
     mqttServer.listen(MQTT_PORT, function () {
          // console.log('MQTT Listen Portt:', MQTT_PORT)
     });
+
+    /**
+     * mqtt auth
+     * @param client
+     * @param username
+     * @param password
+     * @param callback
+     */
+    aedes.authenticate = function (client, username, password, callback) {
+        callback(null, username === 'admin' && password=='admin');
+    }
+
+    /**
+     * 客户端连接
+     */
+    aedes.on('client', function (client) {
+        console.log('Client Connected: \x1b[33m' + (client ? client.id : client) + '\x1b[0m', 'to broker', aedes.id)
+    });
+
+    /**
+     * 订阅
+     */
+    aedes.on('subscribe', function (subscriptions, client) {
+        // console.log('MQTT client \x1b[32m' + (client ? client.id : client) +
+        //     '\x1b[0m subscribed to topics: ' + subscriptions.map(s => s.topic).join('\n'), 'from broker', aedes.id)
+    });
+    /**
+     * when message is publish
+     */
+    aedes.on('publish', async function (packet, client) {
+        // console.log('Client \x1b[31m' + (client ? client.id : 'BROKER_' + aedes.id) + '\x1b[0m has published', packet.payload.toString(), 'on', packet.topic, 'to broker', aedes.id)
+    });
+
+    /**
+     * 取消订阅消息
+     */
+    aedes.on('unsubscribe', function (subscriptions, client) {
+        // console.log('MQTT client \x1b[32m' + (client ? client.id : client) +
+        // '\x1b[0m unsubscribed to topics: ' + subscriptions.join('\n'), 'from broker', aedes.id)
+    });
+
+    /**
+     * 客户端取消链接
+     */
+    aedes.on('clientDisconnect', function (client) {
+        // console.log('Client Disconnected: \x1b[31m' + (client ? client.id : client) + '\x1b[0m', 'to broker', aedes.id)
+    })
     //////////MQTT协议->HTTP路由开发业务更简单//////////
 
     ////////////MQTT协议也可以直接调用Model进行业务编写//////////
