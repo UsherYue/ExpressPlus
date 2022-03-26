@@ -1,0 +1,24 @@
+#Dockerfile demo
+FROM centos:7
+ENV WWW_PATH /home/www
+WORKDIR $WWW_PATH
+ENV NODE_PATH ${WWW_PATH}/node-v16.14.2-linux-x64/bin
+ENV NODE_VERSION_PATH /v16.14.2/node-v16.14.2-linux-x64.tar.xz
+ENV NODE_VERSION_DOWNURL  https://npmmirror.com/mirrors/node/${NODE_VERSION_PATH}
+ENV GIT_REGISTRY http://zoufeng:rjgrid2016@172.16.205.144/ResourcesSquare/weibo2.git
+ENV GIT_PRODUCT_ROOT weibo2
+ENV GIT_PRODUCT_BRANCH  product
+ENV  PATH  $PATH:$NODE_PATH
+RUN  mkdir -p $WWW_PATH && cd $WWW_PATH   \
+     &&yum  -y install git && yum -y install wget \
+     &&wget $NODE_VERSION_DOWNURL  \
+     &&tar -xvf node-v16.14.2-linux-x64.tar.xz\
+     &&cd $WWW_PATH  && git clone $GIT_REGISTRY && cd ${GIT_PRODUCT_ROOT}  \
+     &&npm install -g cnpm --registry=https://registry.npmmirror.com   \
+     &&cnpm install pm2 -g
+WORKDIR   $WWW_PATH/${GIT_PRODUCT_ROOT}
+RUN  git fetch origin ${GIT_PRODUCT_BRANCH}&&git checkout ${GIT_PRODUCT_BRANCH}  \
+     && cnpm install
+COPY config.js ./conf/config.js
+#EXPOSE port[3002,3000,80,443]
+CMD  chmod +x ./run.sh && ./run.sh
