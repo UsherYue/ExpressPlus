@@ -17,7 +17,8 @@ Node Version:10.0+
 ├── core                      // 框架代码   
 ├── test                      //单元测试    
 ├── upload                    //文件上传目录    
-├── .gitignore          
+├── docker                    //Docker部署    
+├── .gitignore            
 ├── package.json  
 ├── README.md                    
 └── www                     //启动入口  
