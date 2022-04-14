@@ -23,6 +23,12 @@ module.exports = {
     },
     base64Encode: str => Buffer.from(str).toString('base64'),
     base64Decode: str => new Buffer(str,'base64').toString(),
+    hash:(str,algo='sha256',encoding='hex')=>{
+        return crypto.createHash(algo).update(str).digest(encoding);
+    },
+    hmac:(str,key,algo='sha256',encoding='hex')=>{
+        return crypto.createHmac('sha256', key).update(str).digest(encoding);
+    },
     rsaSign: (key, data,encode) => {
         var sign = crypto.createSign('RSA-SHA256');
         sign.update(data);

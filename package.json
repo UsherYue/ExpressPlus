@@ -1,6 +1,6 @@
 {
   "name": "ExpressPlus",
-  "version": "1.2",
+  "version": "1.0",
   "scripts": {
     "start": "node www"
   },
@@ -52,7 +52,7 @@
     "expressplus"
   ],
   "author": "usher.yue",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/UsherYue/ExpressPlus/issues"
   },
