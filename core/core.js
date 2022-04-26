@@ -490,7 +490,7 @@ delete process.env["DEBUG_FD"];
                 let $this = this;
                 let begin = (currentPage - 1) * pageCount;
                 return new Promise(function (resolve, reject) {
-                    let countSql = sql.trim().toLowerCase().removeSubRight('limit').removeSubRight('order').replace(/(select\b)(.+)(\bfrom\b.+)(\bgroup\b.+)?(\border\b.+)?/ig, `$1 count(${countFields}) as \`count\` $3 $4`);
+                    let countSql = sql.trim().toLowerCase().removeSubRight('limit').removeSubRight('order').replace(/^(select\b)([^from]+)(\bfrom\b.+)(\bgroup\b.+)?(\border\b.+)?/ig, `$1 count(${countFields}) as \`count\` $3 $4`);
                     let querySql = sql + ' limit ' + begin.toString() + ',' + pageCount.toString();
                     let total = 0;
                     $this.query(querySql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultItems) {
