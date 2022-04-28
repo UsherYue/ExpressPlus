@@ -484,6 +484,15 @@ delete process.env["DEBUG_FD"];
             });
         };
         try {
+            /**
+             * 仅仅支持单一SQL分页 不支持子查询
+             * @param sql
+             * @param currentPage
+             * @param pageCount
+             * @param retTotal
+             * @param countFields
+             * @returns {Promise<unknown>}
+             */
             Sequelize.prototype.getPages = function (sql, currentPage, pageCount, retTotal, countFields = 1) {
                 currentPage = (currentPage <= 0) ? 1 : currentPage;
                 pageCount = (pageCount <= 0) ? 10 : pageCount;
@@ -492,9 +501,51 @@ delete process.env["DEBUG_FD"];
                 return new Promise(function (resolve, reject) {
                     let countSql = sql.trim().toLowerCase().removeSubRight('limit').removeSubRight('order').replace(/^(select\b)([^from]+)(\bfrom\b.+)(\bgroup\b.+)?(\border\b.+)?/ig, `$1 count(${countFields}) as \`count\` $3 $4`);
                     let querySql = sql + ' limit ' + begin.toString() + ',' + pageCount.toString();
-                    let total = 0;
                     $this.query(querySql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultItems) {
                         if (retTotal) {
+                            $this.query(countSql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultCount) {
+                                let count = resultCount.length > 1 ? resultCount.length : (resultCount.length == 1 ? resultCount[0].count : 0);
+                                resolve({
+                                    total: count,
+                                    pagesize: parseInt(pageCount),
+                                    totalpage: parseInt(count / pageCount) + ((count % pageCount > 0) ? 1 : 0),
+                                    list: resultItems,
+                                    current: parseInt(currentPage)
+                                });
+                            }).catch(function (err) {
+                                reject(err);
+                            });
+                        } else {
+                            resolve({
+                                total: 99999,
+                                pagesize: parseInt(pageCount),
+                                totalpage: 999,
+                                list: resultItems,
+                                current: parseInt(currentPage)
+                            });
+                        }
+                    }).catch(function (err) {
+                        resolve(false);
+                    });
+                });
+            }
+            /**
+             * 自定义传入count sql
+             * @param sql
+             * @param currentPage
+             * @param pageCount
+             * @param countSql
+             * @returns {Promise<unknown>}
+             */
+            Sequelize.prototype.getPages_v2 = function (sql, currentPage, pageCount=10, countSql=null) {
+                currentPage = (currentPage <= 0) ? 1 : currentPage;
+                pageCount = (pageCount <= 0) ? 10 : pageCount;
+                let $this = this;
+                let begin = (currentPage - 1) * pageCount;
+                return new Promise(function (resolve, reject) {
+                    let querySql = sql + ' limit ' + begin.toString() + ',' + pageCount.toString();
+                    $this.query(querySql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultItems) {
+                        if (countSql) {
                             $this.query(countSql, {type: Sequelize.QueryTypes.SELECT}).then(function (resultCount) {
                                 let count = resultCount.length > 1 ? resultCount.length : (resultCount.length == 1 ? resultCount[0].count : 0);
                                 resolve({
@@ -636,7 +687,12 @@ delete process.env["DEBUG_FD"];
                 return sqlModel.sql();
             }
             sqlModel.getPages = (currentPage, pageCount, retTotal, countFields = 1) => {
-                return db.getPages(sqlModel.sql(), currentPage, pageCount, retTotal, countFields);
+                let countSql='';
+                if(retTotal){
+                    //生成count sql
+                    countSql=sqlModel.countSql(countFields);
+                }
+                return db.getPages_v2(sqlModel.sql(), currentPage, pageCount,countSql);
             };
             return sqlModel;
         }

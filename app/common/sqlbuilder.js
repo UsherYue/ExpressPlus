@@ -503,6 +503,9 @@ module.exports = {
         this._orderBy += ' order by ' + condition
         return this;
     },
+    countSql:function (countFields='1') {
+        return  `select count(${countFields}) as count  (${this._from})  ${this._where} `
+    },
     sql: function () {
         switch (this._type) {
             case 'select': {
