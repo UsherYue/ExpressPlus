@@ -19,6 +19,28 @@ describe('加密测试', function () {
         console.log(cinphers)
         done();
     });
+    it('RSA CERT TEST1',done=>{
+        let fs=require('fs');
+       let pKey=fs.readFileSync(__dirname+'/../app/cert/key.pem');
+       let pubKey=fs.readFileSync(__dirname+'/../app/cert/cert.pem');;
+       let encode=crypto.publicEncodeData(pubKey,'aaaaa');
+       console.log(encode);
+       let decode=crypto.privateDecodeData(pKey,encode);
+       console.log(decode);
+       done();
+    });
+
+    it('RSA CERT TEST2',done=>{
+        let fs=require('fs');
+        let privateKey=fs.readFileSync(__dirname+'/../app/cert/key.pem').toString();
+        let pubKey=fs.readFileSync(__dirname+'/../app/cert/cert.pem').toString();
+        let encode=crypto.privateEecodeData(privateKey,'aaaaa');
+        console.log(encode);
+         let decode=crypto.publicDecodeData(pubKey,encode);
+         console.log(decode);
+        done();
+    });
+
     it('aes-128-cbc加密和解密', done => {
         const key = '751f621ea5c8f930';
         const iv = '2624750004598718';

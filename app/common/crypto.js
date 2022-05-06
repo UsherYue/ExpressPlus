@@ -69,30 +69,64 @@ module.exports = {
         return crypto.createHmac('sha256', key).update(str).digest(encoding);
     },
     /**
-     * rsaSign
-     * @param key
+     * certSign  privateKey
+     * @param privateKey
      * @param data
      * @param encode
      * @returns {string}
      */
-    rsaSign: (key, data,encode='hex') => {
+    certSign: (privateKey, data,encode='hex') => {
         const sign = crypto.createSign('RSA-SHA256');
         sign.update(data);
-        let sig = sign.sign(key, encode||'hex');
+        let sig = sign.sign(privateKey, encode||'hex');
         return sig;
     },
     /**
-     * rsaVerify
+     * certVerify   cert
      * @param pubKey
      * @param sig
      * @param data
      * @param encode
      * @returns {boolean}
      */
-    rsaVerify: (pubKey, sig, data,encode) => {
+    certVerify: (pubKey, sig, data,encode) => {
         const verify = crypto.createVerify('RSA-SHA256');
         verify.update(data);
         return verify.verify(pubKey, sig, encode||'hex');
+    },
+    /**
+     * publicEncodeData
+     * @param publicKey
+     * @param str
+     * @returns {string}
+     */
+    publicEncodeData :(publicKey,str)=>{
+        return crypto.publicEncrypt(publicKey, Buffer.from(str)).toString('base64');
+    },
+    /**
+     * privateDecodeData
+     * @param privateKey
+     * @param publicEncodeData
+     */
+    privateDecodeData :(privateKey,publicEncodeData)=>{
+        return crypto.privateDecrypt(privateKey, Buffer.from(publicEncodeData, 'base64')).toString();
+    },
+    /**
+     * privateEecodeData
+     * @param privateKey
+     * @param publicEncodeData
+     */
+    privateEecodeData :(privateKey,privateEncodeData)=>{
+        return crypto.privateEncrypt(privateKey, Buffer.from(privateEncodeData)).toString('base64');
+    },
+    /**
+     * publicDecodeData
+     * @param publicKey
+     * @param str
+     * @returns {string}
+     */
+    publicDecodeData :(publicKey,str)=>{
+        return crypto.publicDecrypt(publicKey, Buffer.from(str,'base64')).toString();
     },
     /**
      * aes-128-cbc 对应16字节key iv
