@@ -24,6 +24,7 @@ var core = express();
 var multer = require('multer');
 var logger = require('morgan');
 
+
 //body content json解析
 core.use(bodyParser.json());
 
@@ -974,20 +975,16 @@ delete process.env["DEBUG_FD"];
     }
 }).init();
 
+
 //debug 生产环境直接注释
 core.use(logger('dev'));
 
-//捕获404状态码
-core.use(function (req, res, next) {
-    var err = new Error('Not Found');
-    err.status = 404;
-    next(err);
-});
 
 //处理异常
 process.on('unhandledRejection', (reason, p) => {
     console.log("Unhandled Rejection at: Promise ", p, " reason: ", reason);
 });
+
 
 //错误处理
 core.use(function (err, req, res, next) {
@@ -997,6 +994,8 @@ core.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.send('server error:' + err.message);
 });
+
+
 
 
 module.exports = core;
