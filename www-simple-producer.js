@@ -62,7 +62,6 @@ const httpPort = normalizePort(process.env.HTTP_PORT || global.config.httpConfig
 const httpsPort = normalizePort(process.env.HTTPS_PORT || global.config.httpConfig.httpsPort)||0;
 
 
-
 /*
  * Description:生产者
  * User: usher.yue
