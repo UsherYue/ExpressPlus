@@ -34,7 +34,6 @@ function SingletonMemoryQueue(interval) {
 };
 
 
-SingletonMemoryQueue.prototype.getQueu
 
 /**
  * 执行队列
