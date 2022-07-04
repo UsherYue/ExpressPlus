@@ -170,7 +170,7 @@ delete process.env["DEBUG_FD"];
             line = line.trimLeft();
             //处理注解
             if (line.indexOf('//@') == 0) {
-                var reg = /(Document|Filter)\((.+)\)/ig;
+                var reg = /(Document|Filter|Event)\((.+)\)/ig;
                 let result = reg.exec(line);
                 if (result) {
                     let annotation = `@${result[1]}:${result[2]}`;
@@ -245,6 +245,17 @@ delete process.env["DEBUG_FD"];
                                 }
                             } else {
                                 colorlog.warning('Error', `未定义路由注解:${key}:${anno}`);
+                            }
+                        }
+                    }else if (annoType.indexOf('@Event') == 0) {
+                        for (let anno of annoPrms) {
+                            //执行注解路由
+                            let annoFunc = events[anno];
+                            if (typeof annoFunc == 'function') {
+                                await annoFunc(req, res)
+                                colorlog.success('DONE', `触发事件:${key}:${anno}`);
+                            } else {
+                                colorlog.warning('Error', `未定义事件:${key}:${anno}`);
                             }
                         }
                     }
@@ -671,6 +682,8 @@ delete process.env["DEBUG_FD"];
                 global[moduleName] = require(modulePath);
             }
         );
+        //单进程em
+        global.eventSender=require('events').EventEmitter;
         global.newSqlBuilder = function () {
             let sqlModel = Object.create(sqlbuilder);
             //存在bug 需要修复
