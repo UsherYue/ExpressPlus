@@ -179,7 +179,7 @@ if (cluster.isMaster) {
             maxWidth: 700,
             maxHeight: 530,
             maximizable: false,
-            frame:false,
+           // frame:false,
             webPreferences: {
                 preload:ELECTRON_MAIN_PRELOAD ,
                 navigateOnDragDrop: true, //拖拽图片打开新窗口

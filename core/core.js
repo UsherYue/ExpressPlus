@@ -94,8 +94,8 @@ delete process.env["DEBUG_FD"];
         this._initMiddleWare();
         this._initCommonFunc();
         this._initAnnotation();
-        this._initI18N(`${APP_PATH}lang`, '.json');
-        this._initApp(`${APP_PATH}common/`);
+        this._initI18N();
+        this._initApp();
         this._initRouter(`${APP_PATH}routes/`);
         this._initModules(`${APP_PATH}models/`);
         this._initProcess();
@@ -347,8 +347,8 @@ delete process.env["DEBUG_FD"];
             }
         }
     },
-    _initI18N: function (i18nPath, ext) {
-        require('./lib/_initI18N')(core,i18nPath, ext);
+    _initI18N: function () {
+        require('./lib/_initI18N')(core,`${APP_PATH}lang`, '.json');
     },
     _initStatic: function () {
         require('./lib/_initStaic')(core,express);
@@ -362,8 +362,8 @@ delete process.env["DEBUG_FD"];
     _initTemplate: function () {
         require('./lib/_initTemplate')(core);
     },
-    _initApp: function (commonPath) {
-        require('./lib/_initApp')(commonPath,express);
+    _initApp: function () {
+        require('./lib/_initApp')(`${APP_PATH}common/`,express);
     },
     _initCommonFunc: function () {
         require('./lib/_commFunc');
