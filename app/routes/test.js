@@ -99,8 +99,9 @@ router.get('/verifyjwt',async(req,res,next)=>{
     res.send(data);
 });
 
-router.get('/dbsource',(req,res,_)=>{
-    console.log(req.get('AuthorizationReceive'));
+router.get('/dbsource',async (req,res,_)=>{
+    //console.log(req.get('AuthorizationReceive'));
+    dbs.test();
 
      res.send(global.dbSourceList());
 });

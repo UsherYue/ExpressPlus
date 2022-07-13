@@ -612,7 +612,7 @@ delete process.env["DEBUG_FD"];
             });
             //other db source
             if (config.dbConfigOther) {
-                global.dbOther = {};
+                global.dbOthers = {};
                 let sourceNames = Object.keys(config.dbConfigOther);
                 for (let sourceName of sourceNames) {
                     // global.dbOther[sourceName]=
@@ -638,13 +638,13 @@ delete process.env["DEBUG_FD"];
                         colorlog.warning('Database', `Unable to connect to the Database Source ${sourceName} For Reason:` + JSON.stringify(e.message));
                     });
                     //save  other db source
-                    global.dbOther[sourceName]=sequelize;
+                    global.dbOthers[sourceName]=sequelize;
                 }
             }
             //db source list
-            global.dbSourceList=()=>Object.keys(global.dbOther);
+            global.dbSourceList=()=>Object.keys(global.dbOthers);
             //select other db
-            global.selectDBSource=(sourceName)=>global.dbOther[sourceName];
+            global.selectDBSource=(sourceName)=>global.dbOthers[sourceName];
             //golbal database
             global.db = sequelize;
             global.DB = Sequelize;
@@ -723,17 +723,25 @@ delete process.env["DEBUG_FD"];
         global.eventSender = require('events').EventEmitter;
         global.newSqlBuilder = function () {
             let sqlModel = Object.create(sqlbuilder);
-            //存在bug 需要修复
-            sqlModel.do = () => {
+            /**
+             * 可选择数据源
+             * @param dbSource
+             * @returns {*}
+             */
+            sqlModel.do = (dbSource=false) => {
+                let tmpDb=db;
+                if(!dbSource){
+                    tmpDb=selectDBSource(dbSource);
+                }
                 let sql = sqlModel.sql().trimLeft();
                 if (/^insert\b.*/i.test(sql)) {
-                    return db.insert(sql);
+                    return tmpDb.insert(sql);
                 } else if (/^select.*/i.test(sql)) {
-                    return db.select(sql);
+                    return tmpDb.select(sql);
                 } else if (/^update.*/i.test(sql)) {
-                    return db.update(sql);
+                    return tmpDb.update(sql);
                 } else if (/^delete.*/i.test(sql)) {
-                    return db.delete(sql);
+                    return tmpDb.delete(sql);
                 }
                 return sqlModel.sql();
             }
