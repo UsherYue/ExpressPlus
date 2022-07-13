@@ -219,7 +219,7 @@ delete process.env["DEBUG_FD"];
                     }
                 }
             }
-            let ret={projectName:document.projectName||'',summary:apiDoc}
+            let ret = {projectName: document.projectName || '', summary: apiDoc}
             res.send(ret);
         });
         //对注解进行拦截
@@ -247,7 +247,7 @@ delete process.env["DEBUG_FD"];
                                 colorlog.warning('Error', `未定义路由注解:${key}:${anno}`);
                             }
                         }
-                    }else if (annoType.indexOf('@Event') == 0) {
+                    } else if (annoType.indexOf('@Event') == 0) {
                         for (let anno of annoPrms) {
                             //执行注解路由
                             let annoFunc = events[anno];
@@ -372,13 +372,13 @@ delete process.env["DEBUG_FD"];
         let redisServerDb = (!global.config.redisConfig.db) ? 0 : global.config.redisConfig.db;
         let redisServerPassword = (!global.config.redisConfig.password) ? '' : global.config.redisConfig.password;
         let opt = {
-            socket:{
+            socket: {
                 host: redisServerIp,
                 port: redisServerPort,
-                keepAlive:3600,
-                connectTimeout:5000,
-                password:redisServerPassword,
-                database:redisServerDb
+                keepAlive: 3600,
+                connectTimeout: 5000,
+                password: redisServerPassword,
+                database: redisServerDb
             },
             retry_strategy: function (options) {
                 if (options.error && options.error.code === 'ECONNREFUSED') {
@@ -397,15 +397,15 @@ delete process.env["DEBUG_FD"];
         let client = redis.createClient(opt);
         //socket close
         client.on('error', function (err) {
-            colorlog.warning("Redis",err.message);
+            colorlog.warning("Redis", err.message);
         });
         //redis reconnect
-        client.on('reconnecting',()=>{
-            colorlog.warning("Redis","Reconnect Redis Server!");
+        client.on('reconnecting', () => {
+            colorlog.warning("Redis", "Reconnect Redis Server!");
         });
         //redis connect
         client.on('connect', function () {
-            colorlog.success("Redis","Connect Redis Server Success!");
+            colorlog.success("Redis", "Connect Redis Server Success!");
         });
         client.connect();
         global.redis = client;
@@ -549,7 +549,7 @@ delete process.env["DEBUG_FD"];
              * @param countSql
              * @returns {Promise<unknown>}
              */
-            Sequelize.prototype.getPages_v2 = function (sql, currentPage, pageCount=10, countSql=null) {
+            Sequelize.prototype.getPages_v2 = function (sql, currentPage, pageCount = 10, countSql = null) {
                 currentPage = (currentPage <= 0) ? 1 : currentPage;
                 pageCount = (pageCount <= 0) ? 10 : pageCount;
                 let $this = this;
@@ -584,7 +584,7 @@ delete process.env["DEBUG_FD"];
                     });
                 });
             }
-            var sequelize = new Sequelize(global.config.dbConfig.dbname, null, null, {
+            let sequelize = new Sequelize(global.config.dbConfig.dbname, null, null, {
                 //支持bigint issues
                 //https://github.com/sequelize/sequelize/issues/1222
                 timezone: '+08:00',
@@ -597,21 +597,56 @@ delete process.env["DEBUG_FD"];
                 },
                 pool: (!global.config.dbConfig.pool) ? {
                     maxConnections: 20,
-                    min:5,
+                    min: 5,
                     maxIdleTime: 30000
                 } : global.config.dbConfig.pool,
             });
 
             //Test DB Connect
-            sequelize.authenticate().then(function(e){
-                colorlog.success('Database','Conntent To Database Success');
-            }).catch(function (e){
-                colorlog.warning('Database','Unable to connect to the database For Reason:'+ JSON.stringify(e.message));
+            sequelize.authenticate().then(function (e) {
+                colorlog.success('Database', 'Conntent To Database Success');
+            }).catch(function (e) {
+                colorlog.warning('Database', 'Unable to connect to the database For Reason:' + JSON.stringify(e.message));
             });
+            //other db source
+            if (config.dbConfigOther) {
+                global.dbOther = {};
+                let sourceNames = Object.keys(config.dbConfigOther);
+                for (let sourceName of sourceNames) {
+                    // global.dbOther[sourceName]=
+                    let sourceDBConfig = config.dbConfigOther[sourceName];
+                    let tmpSequelize = new Sequelize(sourceDBConfig.dbname, null, null, {
+                        timezone: '+08:00',
+                        logging: false,
+                        dialectOptions: sourceDBConfig?.dialectOptions ?? {},
+                        dialect: sourceDBConfig.dbtype,
+                        replication: {
+                            read: sourceDBConfig?.read ?? {},
+                            write: sourceDBConfig?.write ?? {}
+                        },
+                        pool: sourceDBConfig?.pool ?? {
+                            maxConnections: 20,
+                            min: 5,
+                            maxIdleTime: 30000
+                        },
+                    });
+                    tmpSequelize.authenticate().then(function (e) {
+                        colorlog.success('Database', `Conntent To Other  Database Source ${sourceName} Success`);
+                    }).catch(function (e) {
+                        colorlog.warning('Database', `Unable to connect to the Database Source ${sourceName} For Reason:` + JSON.stringify(e.message));
+                    });
+                    //save  other db source
+                    global.dbOther[sourceName]=sequelize;
+                }
+            }
+            //db source list
+            global.dbSourceList=()=>Object.keys(global.dbOther);
+            //select other db
+            global.selectDBSource=(sourceName)=>global.dbOther[sourceName];
             //golbal database
             global.db = sequelize;
-            global.DB=Sequelize;
-            global.VModel= (tableName)=>new (require(`${APP_ROOT}/core/adapter/orm/mysql-base`)(global.db)(tableName));
+            global.DB = Sequelize;
+            global.VModel = (tableName,dbSource=global.db) => new (require(`${APP_ROOT}/core/adapter/orm/mysql-base`)(dbSource)(tableName));
         } catch (e) {
             console.error('db init error!....');
         }
@@ -626,7 +661,7 @@ delete process.env["DEBUG_FD"];
         //view path
         core.set('views', tplPath);
         //view cache
-        core.set('view cache',useCache);
+        core.set('view cache', useCache);
         switch (viewEngine) {
             case 'artTemplate': {
                 core.engine(defaultTplExt.replace(".", ""), require('express-art-template'));
@@ -646,19 +681,19 @@ delete process.env["DEBUG_FD"];
                 };
                 break;
             }
-            default:{
+            default: {
                 //adapter
                 //https://github.com/tj/consolidate.js
-                let templateAdapter=require(`${APP_ROOT}/core/adapter/tpl/express-common-template`);
-                let view=templateAdapter(viewEngine);
-                if(!view){
-                    colorlog.warning('TemplateEngine','无法加载模板引擎'+viewEngine);
+                let templateAdapter = require(`${APP_ROOT}/core/adapter/tpl/express-common-template`);
+                let view = templateAdapter(viewEngine);
+                if (!view) {
+                    colorlog.warning('TemplateEngine', '无法加载模板引擎' + viewEngine);
                     break;
                 }
                 //loda tpl engine
-                core.engine(defaultTplExt.replace(".", ""),view );
+                core.engine(defaultTplExt.replace(".", ""), view);
                 //renderToHtml
-                global.renderToHtml=templateAdapter.renderToHtml;
+                global.renderToHtml = templateAdapter.renderToHtml;
             }
         }
     },
@@ -683,7 +718,7 @@ delete process.env["DEBUG_FD"];
             }
         );
         //单进程em
-        global.eventSender=require('events').EventEmitter;
+        global.eventSender = require('events').EventEmitter;
         global.newSqlBuilder = function () {
             let sqlModel = Object.create(sqlbuilder);
             //存在bug 需要修复
@@ -701,12 +736,12 @@ delete process.env["DEBUG_FD"];
                 return sqlModel.sql();
             }
             sqlModel.getPages = (currentPage, pageCount, retTotal, countFields = 1) => {
-                let countSql='';
-                if(retTotal){
+                let countSql = '';
+                if (retTotal) {
                     //生成count sql
-                    countSql=sqlModel.countSql(countFields);
+                    countSql = sqlModel.countSql(countFields);
                 }
-                return db.getPages_v2(sqlModel.sql(), currentPage, pageCount,countSql);
+                return db.getPages_v2(sqlModel.sql(), currentPage, pageCount, countSql);
             };
             return sqlModel;
         }
@@ -1007,8 +1042,6 @@ core.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.send('server error:' + err.message);
 });
-
-
 
 
 module.exports = core;

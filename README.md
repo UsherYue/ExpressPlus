@@ -1,7 +1,7 @@
 ## ExpressPlus
 Author:USher.Yue  
 Email:4223665@qq.com  
-Node Version:10.0+  
+Node Version:16.0+  
 基于Node.js Express等二次封装的开发框架用于快速构建API 应用
 
 ## 目录结构  

@@ -28,6 +28,29 @@ module.exports = {
             }
         ]
     },
+    dbConfigOther:{
+        other:{
+            dbtype: 'mysql',
+            dbname: 'openapi_v3',
+            dialectOptions: {
+                supportBigNumbers: true
+            },
+            write: {
+                host: '172.16.205.122',
+                port: 3306,
+                username: 'root',
+                password: '26e64a66112a8579'
+            },
+            read: [
+                {
+                    host: '172.16.205.122',
+                    port: 3306,
+                    username: 'root',
+                    password: '26e64a66112a8579'
+                }
+            ]
+        }
+    },
     httpConfig: {
         httpPort: 3002,
         //httpsPort:443,

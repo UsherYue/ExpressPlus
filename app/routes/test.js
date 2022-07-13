@@ -99,9 +99,10 @@ router.get('/verifyjwt',async(req,res,next)=>{
     res.send(data);
 });
 
-router.get('/t',(req,res,_)=>{
+router.get('/dbsource',(req,res,_)=>{
     console.log(req.get('AuthorizationReceive'));
-     res.send('ok!');
+
+     res.send(global.dbSourceList());
 });
 
 module.exports = router;
