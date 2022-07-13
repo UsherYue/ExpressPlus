@@ -451,11 +451,13 @@ delete process.env["DEBUG_FD"];
     },
     _initDb: function ($this) {
         let Sequelize = require('sequelize');
-        if (!global.config || !global.config.dbConfig || !global.config.dbConfig.dbtype) {
-            return;
+        if (!config?.dbConfig?.dbtype??false) {
+            console.error('dbConfig.dbtype error!  ');
+            process.exit(-1);
         }
-        if (!global.config || !global.config.dbConfig || !global.config.dbConfig.dbname) {
-            return;
+        if (!config?.dbConfig?.dbname??false) {
+            console.error('dbConfig.dbname error!  ')
+            process.exit(-1);
         }
         Sequelize.prototype.select = function (sql) {
             return this.query(sql, {type: this.QueryTypes.SELECT}).then(function (result) {
@@ -589,17 +591,17 @@ delete process.env["DEBUG_FD"];
                 //https://github.com/sequelize/sequelize/issues/1222
                 timezone: '+08:00',
                 logging: false,
-                dialectOptions: (!global.config.dbConfig.dialectOptions) ? {} : global.config.dbConfig.dialectOptions,
-                dialect: global.config.dbConfig.dbtype,
+                dialectOptions: (config?.dbConfig?.dialectOptions??{}),
+                dialect: config.dbConfig.dbtype,
                 replication: {
-                    read: (!global.config.dbConfig.read) ? {} : global.config.dbConfig.read,
-                    write: (!global.config.dbConfig.write) ? {} : global.config.dbConfig.write
+                    read: (config?.dbConfig?.read??{}),
+                    write: (config?.dbConfig?.write??{})
                 },
-                pool: (!global.config.dbConfig.pool) ? {
+                pool: config?.dbConfig?.pool ?? {
                     maxConnections: 20,
                     min: 5,
                     maxIdleTime: 30000
-                } : global.config.dbConfig.pool,
+                },
             });
 
             //Test DB Connect
@@ -652,10 +654,10 @@ delete process.env["DEBUG_FD"];
         }
     },
     _initTemplate: function () {
-        let tplPath = path.join(__dirname, '../app/', (config.templateConfig && config.templateConfig.viewsPath) ? (config.templateConfig.viewsPath) : 'views');
-        let useCache = (config.templateConfig && config.templateConfig.useCache) ? config.templateConfig.userCache : false;
-        let viewEngine = (config.templateConfig && config.templateConfig.viewEngine) ? config.templateConfig.viewEngine : 'artTemplate';
-        let defaultTplExt = (config.templateConfig && config.templateConfig.extName) ? config.templateConfig.extName : '.html';
+        let tplPath = path.join(__dirname, '../app/', config?.templateConfig?.viewsPath??'views');
+        let useCache =  config?.templateConfig?.userCache?? false;
+        let viewEngine = config?.templateConfig?.viewEngine ?? 'artTemplate';
+        let defaultTplExt = config?.templateConfig?.extName?? '.html';
         //set engine
         core.set('view engine', defaultTplExt);
         //view path
