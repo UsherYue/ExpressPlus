@@ -638,7 +638,7 @@ delete process.env["DEBUG_FD"];
                         colorlog.warning('Database', `Unable to connect to the Database Source ${sourceName} For Reason:` + JSON.stringify(e.message));
                     });
                     //save  other db source
-                    global.dbOthers[sourceName]=sequelize;
+                    global.dbOthers[sourceName]=tmpSequelize;
                 }
             }
             //db source list
